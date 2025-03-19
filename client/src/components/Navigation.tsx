@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import {
+  Bars3Icon as MenuIcon,
+  XMarkIcon as CloseIcon,
+  AcademicCapIcon,
+  BookOpenIcon,
+  CalendarIcon,
+  ChatBubbleLeftRightIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Curriculum", href: "#curriculum" },
-    { name: "Schedule", href: "#schedule" },
-    { name: "Testimonials", href: "#testimonials" },
-    { name: "FAQ", href: "#faq" },
+    { name: "Home", href: "/", icon: <AcademicCapIcon className="w-5 h-5" /> },
+    { name: "Curriculum", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
+    { name: "Schedule", href: "#schedule", icon: <CalendarIcon className="w-5 h-5" /> },
+    { name: "Testimonials", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
+    { name: "FAQ", href: "#faq", icon: <QuestionMarkCircleIcon className="w-5 h-5" /> },
   ];
 
   return (
@@ -35,9 +43,10 @@ export default function Navigation() {
               <a
                 key={item.name}
                 href={item.href}
-                className="text-primary-foreground/90 hover:text-primary-foreground transition-colors"
+                className="text-primary-foreground/90 hover:text-primary-foreground transition-colors flex items-center gap-2"
               >
-                {item.name}
+                {item.icon}
+                <span>{item.name}</span>
               </a>
             ))}
             <Button
@@ -55,9 +64,9 @@ export default function Navigation() {
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? (
-              <X className="h-6 w-6" />
+              <CloseIcon className="h-6 w-6" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <MenuIcon className="h-6 w-6" />
             )}
           </button>
         </div>
@@ -69,10 +78,11 @@ export default function Navigation() {
               <a
                 key={item.name}
                 href={item.href}
-                className="block py-2 text-primary-foreground/90 hover:text-primary-foreground"
+                className="block py-2 text-primary-foreground/90 hover:text-primary-foreground flex items-center gap-2"
                 onClick={() => setIsOpen(false)}
               >
-                {item.name}
+                {item.icon}
+                <span>{item.name}</span>
               </a>
             ))}
             <Button
