@@ -22,18 +22,30 @@ export default function AdminLayout({ children }: PropsWithChildren) {
   const [location, navigate] = useLocation();
 
   // Check admin session
-  const { data: user, isError } = useQuery({
+  const { data: user, isError, isLoading } = useQuery({
     queryKey: ['/api/user'],
   });
 
   useEffect(() => {
+    // Add debug logging
+    console.log('Admin Layout - User State:', { user, isError, isLoading });
+
     // Redirect to admin login if not authenticated or not admin
-    if (isError || !user?.isAdmin) {
+    if (!isLoading && (!user || !user.isAdmin)) {
       navigate('/admin');
     }
-  }, [user, isError, navigate]);
+  }, [user, isError, isLoading, navigate]);
 
-  // Don't render anything while checking authentication
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Don't render anything if not admin
   if (!user?.isAdmin) {
     return null;
   }

@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { userLoginSchema, type LoginUser } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { KeyIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
@@ -56,12 +56,16 @@ export default function AdminLogin() {
         return;
       }
 
+      // Invalidate the user query to force a refresh of the session state
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+
       toast({
         title: "Login successful!",
         description: "Welcome to the admin dashboard.",
       });
-      // Explicitly navigate to the admin dashboard
-      setTimeout(() => navigate("/admin/dashboard"), 100);
+
+      // Navigate to admin dashboard
+      navigate("/admin/dashboard");
     },
     onError: (error) => {
       toast({
