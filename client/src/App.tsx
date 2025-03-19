@@ -28,6 +28,34 @@ function Router() {
           </AdminLayout>
         )}
       </Route>
+      <Route path="/admin/users">
+        {() => (
+          <AdminLayout>
+            <div>Users Management</div>
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/sessions">
+        {() => (
+          <AdminLayout>
+            <div>Sessions Management</div>
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/payments">
+        {() => (
+          <AdminLayout>
+            <div>Payments Management</div>
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/settings">
+        {() => (
+          <AdminLayout>
+            <div>Admin Settings</div>
+          </AdminLayout>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

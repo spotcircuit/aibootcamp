@@ -60,7 +60,8 @@ export default function AdminLogin() {
         title: "Login successful!",
         description: "Welcome to the admin dashboard.",
       });
-      navigate("/admin/dashboard");
+      // Explicitly navigate to the admin dashboard
+      setTimeout(() => navigate("/admin/dashboard"), 100);
     },
     onError: (error) => {
       toast({
