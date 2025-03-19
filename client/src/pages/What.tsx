@@ -1,8 +1,10 @@
 import { CheckCircle2 } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 export default function WhatIsAI() {
   return (
     <div className="min-h-screen">
+      <Navigation />
       {/* What is AI Section */}
       <section className="py-20 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
@@ -13,7 +15,7 @@ export default function WhatIsAI() {
             <div className="space-y-6">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="/image_1742408574966.png" 
+                  src="/attached_assets/image_1742408574966.png" 
                   alt="AI Capabilities" 
                   className="w-full"
                 />
@@ -34,7 +36,7 @@ export default function WhatIsAI() {
             <div className="space-y-6">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="/image_1742408591793.png" 
+                  src="/attached_assets/image_1742408591793.png" 
                   alt="AI Evolution" 
                   className="w-full"
                 />
@@ -73,7 +75,7 @@ export default function WhatIsAI() {
             </div>
             <div className="order-1 md:order-2">
               <img 
-                src="/image_1742408666665.png" 
+                src="/attached_assets/image_1742408666665.png" 
                 alt="AI Discussion Topics" 
                 className="rounded-lg shadow-xl"
               />
@@ -88,7 +90,7 @@ export default function WhatIsAI() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <img 
-                src="/image_1742408738311.png" 
+                src="/attached_assets/image_1742408738311.png" 
                 alt="AI Ethics Question" 
                 className="rounded-lg shadow-xl"
               />
@@ -119,7 +121,7 @@ export default function WhatIsAI() {
             </div>
             <div className="order-1 md:order-2">
               <img 
-                src="/image_1742408756740.png" 
+                src="/attached_assets/image_1742408756740.png" 
                 alt="AI History and Evolution" 
                 className="rounded-lg shadow-xl"
               />

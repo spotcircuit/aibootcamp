@@ -58,7 +58,7 @@ export default function Home() {
             <div className="space-y-6">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="/image_1742408574966.png" 
+                  src="/attached_assets/image_1742408574966.png" 
                   alt="AI Capabilities" 
                   className="w-full"
                 />
@@ -79,7 +79,7 @@ export default function Home() {
             <div className="space-y-6">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="/image_1742408591793.png" 
+                  src="/attached_assets/image_1742408591793.png" 
                   alt="AI Evolution" 
                   className="w-full"
                 />
@@ -96,12 +96,12 @@ export default function Home() {
       </section>
 
       <main className="container mx-auto px-4">
-        {/* What You'll Learn Section */}
+        {/* Curriculum Section with Prompting */}
         <section id="curriculum" className="py-20">
           <h2 className="text-3xl font-bold text-center mb-12">
             What You'll Learn
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             {modules.map((module) => (
               <div key={module.title} className="p-6 rounded-lg bg-card hover:shadow-lg transition-shadow">
                 <div className="mb-4">{module.icon}</div>
@@ -109,6 +109,36 @@ export default function Home() {
                 <p className="text-muted-foreground">{module.description}</p>
               </div>
             ))}
+          </div>
+
+          {/* Prompting Section */}
+          <div className="mt-16">
+            <h3 className="text-2xl font-bold text-center mb-8">Mastering AI Prompts</h3>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <img 
+                  src="/attached_assets/image_1742408880727.png" 
+                  alt="Prompting Methods" 
+                  className="rounded-lg shadow-xl w-full"
+                />
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold mb-4">8 Prompt Engineering Methods</h4>
+                <ul className="space-y-3">
+                  <li>1. Zero-Shot Learning</li>
+                  <li>2. One-Shot Learning</li>
+                  <li>3. Few-Shot Learning</li>
+                  <li>4. Chain-of-Thought Prompting</li>
+                  <li>5. Iterative Prompting</li>
+                  <li>6. Negative Prompting</li>
+                  <li>7. Hybrid Prompting</li>
+                  <li>8. Prompt Chaining</li>
+                </ul>
+                <p className="mt-4 text-muted-foreground">
+                  Learn how to effectively communicate with AI models using these advanced prompting techniques.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -122,7 +152,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg border bg-card">
                   <img 
-                    src="/image_1742408440211.png" 
+                    src="/attached_assets/image_1742408440211.png" 
                     alt="DeepMind's Breakthrough" 
                     className="w-full"
                   />
@@ -137,7 +167,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg border bg-card">
                   <img 
-                    src="/image_1742408487798.png" 
+                    src="/attached_assets/image_1742408487798.png" 
                     alt="AI Text Generation Scale" 
                     className="w-full"
                   />
@@ -162,7 +192,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="/image_1742408641990.png" 
+                  src="/attached_assets/image_1742408641990.png" 
                   alt="AI Economic Impact" 
                   className="w-full"
                 />
@@ -214,7 +244,7 @@ export default function Home() {
               </div>
               <div className="order-1 md:order-2">
                 <img 
-                  src="/image_1742408666665.png" 
+                  src="/attached_assets/image_1742408666665.png" 
                   alt="AI Discussion Topics" 
                   className="rounded-lg shadow-xl"
                 />
@@ -229,7 +259,7 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <img 
-                  src="/image_1742408738311.png" 
+                  src="/attached_assets/image_1742408738311.png" 
                   alt="AI Ethics Question" 
                   className="rounded-lg shadow-xl"
                 />
@@ -260,7 +290,7 @@ export default function Home() {
               </div>
               <div className="order-1 md:order-2">
                 <img 
-                  src="/image_1742408756740.png" 
+                  src="/attached_assets/image_1742408756740.png" 
                   alt="AI History and Evolution" 
                   className="rounded-lg shadow-xl"
                 />
@@ -279,7 +309,7 @@ export default function Home() {
               <div className="flex flex-col md:flex-row gap-8 items-center bg-card rounded-lg p-8 border">
                 <div className="w-full md:w-1/2">
                   <img 
-                    src="/image_1742408546572.png" 
+                    src="/attached_assets/image_1742408546572.png" 
                     alt="Dr. Allan D Thompson" 
                     className="rounded-lg w-full"
                   />

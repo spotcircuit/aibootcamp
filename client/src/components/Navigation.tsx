@@ -11,6 +11,7 @@ import {
   QuestionMarkCircleIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
+import { Brain } from "lucide-react"; // Using lucide-react's Brain icon instead
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function Navigation() {
 
   const navItems = [
     { name: "Home", href: "/", icon: <AcademicCapIcon className="w-5 h-5" /> },
+    { name: "What is AI?", href: "/what", icon: <Brain className="w-5 h-5" /> },
     { name: "Curriculum", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: "Schedule", href: "#schedule", icon: <CalendarIcon className="w-5 h-5" /> },
     { name: "Testimonials", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
