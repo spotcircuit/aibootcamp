@@ -32,7 +32,7 @@ export const events = pgTable("events", {
 // Registrations table with proper relations
 export const registrations = pgTable("registrations", {
   id: serial("id").primaryKey(),
-  userId: numeric("user_id").references(() => users.id),
+  userId: serial("user_id").references(() => users.id),
   eventId: numeric("event_id").references(() => events.id),
   stripePaymentId: text("stripe_payment_id"),
   emailSent: text("email_sent").default("false"),
