@@ -106,6 +106,47 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Instructor Section */}
+        <section className="py-20 bg-muted/10">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Meet Your Instructor
+            </h2>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row gap-8 items-center bg-card rounded-lg p-8 border">
+                <div className="w-full md:w-1/2">
+                  <img 
+                    src="/image_1742408546572.png" 
+                    alt="Dr. Allan D Thompson" 
+                    className="rounded-lg w-full"
+                  />
+                </div>
+                <div className="w-full md:w-1/2 space-y-4">
+                  <h3 className="text-2xl font-bold">DR. ALLAN D THOMPSON</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                      <span>Harvard Certified Coach</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                      <span>Former head of Mensa International (responsible for working with child prodigies)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                      <span>Author of more than 20 books on human and artificial intelligence</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                      <span>Conducted more than 50 interviews with GPT</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <ToolsShowcase />
 
         {/* Schedule Section */}
