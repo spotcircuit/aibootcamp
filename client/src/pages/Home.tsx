@@ -48,6 +48,53 @@ export default function Home() {
       <Navigation />
       <Hero />
 
+      {/* What is AI Section */}
+      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            What is AI?
+          </h2>
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-lg border bg-card">
+                <img 
+                  src="/image_1742408574966.png" 
+                  alt="AI Capabilities" 
+                  className="w-full"
+                />
+                <div className="p-6">
+                  <h3 className="text-2xl font-semibold mb-3">Real World Applications</h3>
+                  <p className="text-muted-foreground">
+                    From writing books to automating tasks, AI tools are revolutionizing how we work. The AI Recruiter demonstrates how AI can transform specific industries with practical applications.
+                  </p>
+                  <ul className="mt-4 space-y-2">
+                    <li>• From blank page to print copy in 2 weeks</li>
+                    <li>• 9 Chapters approximately 74,000 words</li>
+                    <li>• Includes a prompt "cheat sheet"</li>
+                    <li>• Copy/paste prompt templates for immediate use</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-lg border bg-card">
+                <img 
+                  src="/image_1742408591793.png" 
+                  alt="AI Evolution" 
+                  className="w-full"
+                />
+                <div className="p-6">
+                  <h3 className="text-2xl font-semibold mb-3">Rapid Evolution</h3>
+                  <p className="text-muted-foreground">
+                    Experience the incredible evolution of AI technology from GPT-3 to GPT-4 and beyond. Learn how each iteration brings new capabilities and opportunities for innovation in your field.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <main className="container mx-auto px-4">
         {/* What You'll Learn Section */}
         <section id="curriculum" className="py-20">
@@ -100,6 +147,44 @@ export default function Home() {
                       AI language models are processing and generating content at unprecedented scales, revolutionizing how we interact with and create information.
                     </p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI Economic Impact Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              The impact of AI on the Economy
+            </h2>
+            <div className="max-w-4xl mx-auto">
+              <div className="overflow-hidden rounded-lg border bg-card">
+                <img 
+                  src="/image_1742408641990.png" 
+                  alt="AI Economic Impact" 
+                  className="w-full"
+                />
+                <div className="p-6">
+                  <div className="grid md:grid-cols-3 gap-8 text-center">
+                    <div>
+                      <h3 className="text-4xl font-bold text-primary mb-2">1B+</h3>
+                      <p className="text-muted-foreground">ChatGPT web visits in the first two months</p>
+                    </div>
+                    <div>
+                      <h3 className="text-4xl font-bold text-primary mb-2">$900B</h3>
+                      <p className="text-muted-foreground">Global revenue from AI software by 2026</p>
+                    </div>
+                    <div>
+                      <h3 className="text-4xl font-bold text-primary mb-2">$15.7T</h3>
+                      <p className="text-muted-foreground">Potential contribution to global economy by 2030</p>
+                    </div>
+                  </div>
+                  <p className="mt-6 text-center text-muted-foreground">
+                    AI has the potential to deliver additional global economic activity of around $13 trillion by 2030, 
+                    representing about 16 percent higher cumulative GDP compared with today.
+                  </p>
                 </div>
               </div>
             </div>
