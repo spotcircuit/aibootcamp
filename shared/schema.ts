@@ -38,6 +38,7 @@ export const registrations = pgTable("registrations", {
 export const userLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.enum(["customer", "admin"]).default("customer"),
 });
 
 // Schema for user registration/login with role
