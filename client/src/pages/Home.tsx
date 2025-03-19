@@ -7,7 +7,7 @@ import ToolsShowcase from "@/components/ToolsShowcase";
 import EventCalendar from "@/components/EventCalendar";
 import { useLocation } from "wouter";
 import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
-import { BUCKET_URL } from "../lib/constants";
+import { BUCKET_URL } from "@/lib/constants";
 
 export default function Home() {
   const [, navigate] = useLocation();
