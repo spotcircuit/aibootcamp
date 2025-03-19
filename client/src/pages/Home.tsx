@@ -95,6 +95,47 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Hands-on Training Section */}
+        <section className="py-20 bg-slate-900">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12 text-white">
+              Hands-on AI Training
+            </h2>
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg bg-card">
+                  <img 
+                    src="/attached_assets/image_1742409548460.png" 
+                    alt="AI Robots Lab Training" 
+                    className="w-full"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-3">Advanced AI Labs</h3>
+                    <p className="text-muted-foreground">
+                      Get hands-on experience with cutting-edge AI robots and equipment in our state-of-the-art laboratory facilities.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg bg-card">
+                  <img 
+                    src="/attached_assets/image_1742409573981.png" 
+                    alt="AI Robot Training Course" 
+                    className="w-full"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-3">Practical Exercises</h3>
+                    <p className="text-muted-foreground">
+                      Learn through interactive exercises and real-world scenarios, developing practical skills in AI and robotics.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* AI Economic Impact Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
