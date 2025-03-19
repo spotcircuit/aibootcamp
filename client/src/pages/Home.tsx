@@ -7,6 +7,7 @@ import ToolsShowcase from "@/components/ToolsShowcase";
 import EventCalendar from "@/components/EventCalendar";
 import { useLocation } from "wouter";
 import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
+import { BUCKET_URL } from "../../server/s3";
 
 export default function Home() {
   const [, navigate] = useLocation();
@@ -70,7 +71,7 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <img 
-                  src="../../../attached_assets/image_1742408880727.png" 
+                  src={`${BUCKET_URL}/images/homepage/prompting_methods.png`}
                   alt="Prompting Methods" 
                   className="rounded-lg shadow-xl w-full"
                 />
@@ -105,7 +106,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg bg-card">
                   <img 
-                    src="../../../attached_assets/image_1742409548460.png" 
+                    src={`${BUCKET_URL}/images/homepage/robots_lab.png`}
                     alt="AI Robots Lab Training" 
                     className="w-full"
                   />
@@ -120,7 +121,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg bg-card">
                   <img 
-                    src="../../../attached_assets/image_1742409573981.png" 
+                    src={`${BUCKET_URL}/images/homepage/practical_training.png`}
                     alt="AI Robot Training Course" 
                     className="w-full"
                   />
@@ -145,7 +146,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto">
               <div className="overflow-hidden rounded-lg border bg-card">
                 <img 
-                  src="../../../attached_assets/image_1742408641990.png" 
+                  src={`${BUCKET_URL}/images/homepage/economic_impact.png`}
                   alt="AI Economic Impact" 
                   className="w-full"
                 />
@@ -184,7 +185,7 @@ export default function Home() {
               <div className="flex flex-col md:flex-row gap-8 items-center bg-card rounded-lg p-8 border">
                 <div className="w-full md:w-1/2">
                   <img 
-                    src="../../../attached_assets/image_1742408546572.png" 
+                    src={`${BUCKET_URL}/images/homepage/instructor.png`}
                     alt="Dr. Allan D Thompson" 
                     className="rounded-lg w-full"
                   />
