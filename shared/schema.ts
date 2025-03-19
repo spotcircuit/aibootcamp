@@ -2,13 +2,13 @@ import { pgTable, text, serial, numeric, timestamp, boolean } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table for authentication with role
+// Users table with isAdmin flag
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
-  role: text("role").notNull().default("customer"),
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -23,7 +23,7 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Modified registrations table with proper relations
+// Registrations table with proper relations
 export const registrations = pgTable("registrations", {
   id: serial("id").primaryKey(),
   userId: numeric("user_id").references(() => users.id),
@@ -38,10 +38,9 @@ export const registrations = pgTable("registrations", {
 export const userLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["customer", "admin"]).default("customer"),
 });
 
-// Schema for user registration/login with role
+// Schema for user registration
 export const userAuthSchema = createInsertSchema(users)
   .pick({
     email: true,
@@ -51,7 +50,6 @@ export const userAuthSchema = createInsertSchema(users)
   .extend({
     email: z.string().email("Please enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    role: z.enum(["customer", "admin"]).default("customer"),
   });
 
 // Export types

@@ -74,6 +74,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const data = userLoginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(data.email);
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValid = await storage.validateUserPassword(user, data.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Send user data without password
+      const { password, ...userData } = user;
+      res.json(userData);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/register-event", async (req, res) => {
     try {
       if (!req.user?.id) {
@@ -135,6 +161,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { registrationId, paymentIntentId } = req.body;
       await storage.updatePaymentStatus(registrationId, paymentIntentId);
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/events", async (req, res) => {
+    try {
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const [event] = await db
+        .insert(events)
+        .values({
+          name: req.body.name,
+          startDate: new Date(req.body.startDate),
+          endDate: new Date(req.body.endDate),
+          capacity: req.body.capacity,
+          price: req.body.price,
+        })
+        .returning();
+
+      res.json(event);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
