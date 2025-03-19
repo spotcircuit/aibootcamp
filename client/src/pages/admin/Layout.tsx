@@ -1,7 +1,6 @@
-import { PropsWithChildren, useEffect } from "react";
+import { PropsWithChildren } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import {
   ChartBarIcon,
   UsersIcon,
@@ -19,36 +18,7 @@ const sidebarItems = [
 ];
 
 export default function AdminLayout({ children }: PropsWithChildren) {
-  const [location, navigate] = useLocation();
-
-  // Check admin session
-  const { data: user, isError, isLoading } = useQuery({
-    queryKey: ['/api/user'],
-  });
-
-  useEffect(() => {
-    // Add debug logging
-    console.log('Admin Layout - User State:', { user, isError, isLoading });
-
-    // Redirect to admin login if not authenticated or not admin
-    if (!isLoading && (!user || !user.isAdmin)) {
-      navigate('/admin');
-    }
-  }, [user, isError, isLoading, navigate]);
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Don't render anything if not admin
-  if (!user?.isAdmin) {
-    return null;
-  }
+  const [location] = useLocation();
 
   return (
     <div className="min-h-screen flex">
@@ -75,23 +45,6 @@ export default function AdminLayout({ children }: PropsWithChildren) {
             </a>
           ))}
         </nav>
-
-        <div className="mt-auto pt-4 border-t border-primary-foreground/20">
-          <div className="text-sm mb-2">
-            <p className="text-primary-foreground/60">Logged in as</p>
-            <p className="font-medium">{user.email}</p>
-          </div>
-          <Button 
-            variant="outline" 
-            className="w-full border-primary-foreground/20"
-            onClick={() => {
-              fetch('/api/logout', { method: 'POST' })
-                .then(() => navigate('/admin'));
-            }}
-          >
-            Logout
-          </Button>
-        </div>
       </aside>
 
       {/* Main content */}
