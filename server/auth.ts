@@ -59,7 +59,8 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Invalid credentials" });
           }
 
-          return done(null, user);
+          const { password: _, ...userWithoutPassword } = user;
+          return done(null, userWithoutPassword);
         } catch (error) {
           return done(error);
         }
@@ -73,22 +74,26 @@ export function setupAuth(app: Express) {
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const user = await storage.getUserByEmail(id);
-      done(null, user);
+      const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
+      const { password: _, ...userWithoutPassword } = user;
+      done(null, userWithoutPassword);
     } catch (error) {
       done(error);
     }
   });
 }
 
-export function isAuthenticated(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+export function isAuthenticated(req: Express.Request, res: Express.Response, next: Function) {
   if (req.isAuthenticated()) {
     return next();
   }
   res.status(401).json({ message: "Not authenticated" });
 }
 
-export function isAdmin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+export function isAdmin(req: Express.Request, res: Express.Response, next: Function) {
   if (req.isAuthenticated() && req.user.isAdmin) {
     return next();
   }

@@ -1,4 +1,4 @@
-import { type Registration, type InsertRegistration, type User, type InsertUser, registrations, users } from "@shared/schema";
+import { type Registration, type User, type InsertUser, registrations, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db, pool } from "./db";
 import bcrypt from "bcryptjs";
@@ -8,11 +8,12 @@ import connectPg from "connect-pg-simple";
 const PostgresStore = connectPg(session);
 
 export interface IStorage {
-  createRegistration(registration: InsertRegistration): Promise<Registration>;
+  createRegistration(registration: Registration): Promise<Registration>;
   getRegistrations(): Promise<Registration[]>;
   updatePaymentStatus(id: number, paymentId: string): Promise<Registration>;
   updateEmailStatus(id: number): Promise<Registration>;
   createUser(user: InsertUser): Promise<User>;
+  getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   validateUserPassword(user: User, password: string): Promise<boolean>;
   sessionStore: session.Store;
@@ -28,42 +29,46 @@ export class PostgresStorage implements IStorage {
     });
   }
 
-  async createRegistration(data: InsertRegistration): Promise<Registration> {
-    // Check if user exists
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async validateUserPassword(user: User, password: string): Promise<boolean> {
+    return await bcrypt.compare(password, user.password);
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
     const [existingUser] = await db
       .select()
       .from(users)
-      .where(eq(users.email, data.email));
+      .where(eq(users.email, userData.email));
 
-    let userId = existingUser?.id;
-
-    if (!userId) {
-      // Create a temporary password that user will need to change
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-      const [newUser] = await db.insert(users)
-        .values({
-          email: data.email,
-          name: data.name,
-          password: hashedPassword,
-        })
-        .returning();
-
-      userId = newUser.id;
+    if (existingUser) {
+      throw new Error("User with this email already exists");
     }
 
-    const [registration] = await db.insert(registrations)
+    const [user] = await db.insert(users)
       .values({
-        ...data,
-        userId,
-        phone: data.phone || null,
-        stripePaymentId: null,
-        emailSent: "false",
-        isPaid: false,
+        ...userData,
+        password: hashedPassword,
       })
       .returning();
 
+    return user;
+  }
+
+  async createRegistration(data: Registration): Promise<Registration> {
+    const [registration] = await db.insert(registrations)
+      .values(data)
+      .returning();
     return registration;
   }
 
@@ -100,41 +105,6 @@ export class PostgresStorage implements IStorage {
     }
 
     return registration;
-  }
-
-  async createUser(userData: InsertUser): Promise<User> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, userData.email));
-
-    if (existingUser) {
-      throw new Error("User with this email already exists");
-    }
-
-    const [user] = await db.insert(users)
-      .values({
-        ...userData,
-        password: hashedPassword,
-      })
-      .returning();
-
-    return user;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email));
-
-    return user;
-  }
-
-  async validateUserPassword(user: User, password: string): Promise<boolean> {
-    return await bcrypt.compare(password, user.password);
   }
 }
 
