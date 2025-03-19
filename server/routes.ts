@@ -7,8 +7,7 @@ import { db } from "./db";
 import { events, registrations } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
-import passport from 'passport'; // Add passport import
-
+import passport from 'passport';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -186,6 +185,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+
+  app.patch("/api/admin/events/:id", isAdmin, async (req, res) => {
+    try {
+      const [event] = await db
+        .update(events)
+        .set({
+          name: req.body.name,
+          startDate: new Date(req.body.startDate),
+          endDate: new Date(req.body.endDate),
+          capacity: req.body.capacity,
+          price: req.body.price,
+        })
+        .where(eq(events.id, parseInt(req.params.id)))
+        .returning();
+
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      res.json(event);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;
