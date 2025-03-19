@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import Checkout from "@/pages/Checkout";
+import WhatIsAI from "@/pages/What";
 import CustomerDashboard from "@/pages/customer/Dashboard";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminEvents from "@/pages/admin/Events";
@@ -16,6 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/what" component={WhatIsAI} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/checkout" component={Checkout} />
