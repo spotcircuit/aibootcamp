@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   ChatBubbleLeftRightIcon,
   QuestionMarkCircleIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 
 export default function Navigation() {
@@ -49,13 +50,18 @@ export default function Navigation() {
                 <span>{item.name}</span>
               </a>
             ))}
-            <Button
-              onClick={() => window.location.href = "/register"}
-              variant="secondary"
-              className="bg-background text-foreground hover:bg-background/90"
-            >
-              Register Now
-            </Button>
+            <div className="flex items-center gap-4">
+              <Link href="/admin" className="text-primary-foreground/90 hover:text-primary-foreground transition-colors">
+                <ShieldCheckIcon className="w-5 h-5" />
+              </Link>
+              <Button
+                onClick={() => window.location.href = "/register"}
+                variant="secondary"
+                className="bg-background text-foreground hover:bg-background/90"
+              >
+                Register Now
+              </Button>
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -85,6 +91,11 @@ export default function Navigation() {
                 <span>{item.name}</span>
               </a>
             ))}
+            <div className="flex items-center gap-4 py-2">
+              <Link href="/admin" className="text-primary-foreground/90 hover:text-primary-foreground">
+                <ShieldCheckIcon className="w-5 h-5" />
+              </Link>
+            </div>
             <Button
               onClick={() => window.location.href = "/register"}
               variant="secondary"
