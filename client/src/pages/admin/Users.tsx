@@ -29,8 +29,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,10 +57,11 @@ const inviteUserSchema = z.object({
 type CreateUserData = z.infer<typeof createUserSchema>;
 type InviteUserData = z.infer<typeof inviteUserSchema>;
 
-type DialogMode = "create" | "invite" | null;
+type DialogMode = "create" | "invite" | "edit" | null;
 
 export default function UsersManagement() {
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   const { data: users } = useQuery<User[]>({
@@ -81,6 +84,10 @@ export default function UsersManagement() {
       name: "",
       email: "",
     },
+  });
+
+  const editForm = useForm<CreateUserData>({
+    resolver: zodResolver(createUserSchema),
   });
 
   const createUser = useMutation({
@@ -128,6 +135,41 @@ export default function UsersManagement() {
     },
   });
 
+  const editUser = useMutation({
+    mutationFn: async (data: CreateUserData & { id: number }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${data.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setDialogMode(null);
+      setSelectedUser(null);
+      editForm.reset();
+      toast({
+        title: "User updated",
+        description: "The user has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    editForm.reset({
+      name: user.name,
+      email: user.email,
+      password: "", // Leave password empty when editing
+      isAdmin: user.isAdmin,
+    });
+    setDialogMode("edit");
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -154,6 +196,7 @@ export default function UsersManagement() {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Created At</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,6 +209,15 @@ export default function UsersManagement() {
                   </TableCell>
                   <TableCell>
                     {new Date(user.createdAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(user)}
+                    >
+                      Edit
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -224,8 +276,113 @@ export default function UsersManagement() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={createForm.control}
+                name="isAdmin"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Administrator Access</FormLabel>
+                      <FormDescription>
+                        Grant admin privileges to this user
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="w-full" disabled={createUser.isPending}>
                 {createUser.isPending ? "Creating..." : "Create User"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={dialogMode === "edit"} onOpenChange={(open) => !open && setDialogMode(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Modify user details and permissions.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form 
+              onSubmit={editForm.handleSubmit((data) => {
+                if (selectedUser) {
+                  editUser.mutate({ ...data, id: selectedUser.id });
+                }
+              })} 
+              className="space-y-4"
+            >
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} placeholder="Leave blank to keep current password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="isAdmin"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Administrator Access</FormLabel>
+                      <FormDescription>
+                        Grant admin privileges to this user
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={editUser.isPending}>
+                {editUser.isPending ? "Updating..." : "Update User"}
               </Button>
             </form>
           </Form>
