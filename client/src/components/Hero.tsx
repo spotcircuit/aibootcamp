@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { 
+  SparklesIcon,
+  LightBulbIcon,
+  BeakerIcon,
+  CpuChipIcon,
+  ArrowRightIcon
+} from "@heroicons/react/24/outline";
 
 export default function Hero() {
   const [, navigate] = useLocation();
@@ -21,17 +28,22 @@ export default function Hero() {
           <rect width="100%" height="100%" fill="url(#grid)"/>
           <rect width="100%" height="100%" fill="url(#ai-circles)"/>
 
-          {/* Animated AI "Neurons" */}
+          {/* Floating AI Elements */}
           <g className="animate-pulse">
-            <circle cx="20%" cy="30%" r="5" fill="hsl(230, 84%, 51%)" opacity="0.5"/>
-            <circle cx="80%" cy="60%" r="8" fill="hsl(230, 84%, 51%)" opacity="0.3"/>
-            <circle cx="40%" cy="80%" r="6" fill="hsl(230, 84%, 51%)" opacity="0.4"/>
+            <CpuChipIcon className="w-8 h-8" x="20%" y="30%" />
+            <BeakerIcon className="w-8 h-8" x="80%" y="60%" />
+            <LightBulbIcon className="w-8 h-8" x="40%" y="80%" />
           </g>
         </svg>
       </div>
 
       <div className="container mx-auto px-4 py-24 sm:py-32 relative z-10">
         <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <SparklesIcon className="w-6 h-6 text-primary animate-pulse" />
+            <span className="text-sm font-semibold text-primary">Transform Your Future with AI</span>
+          </div>
+
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
             <span className="block">Master AI Fundamentals</span>
             <span className="block text-primary mt-2">in Just 12 Weeks</span>
@@ -45,10 +57,11 @@ export default function Hero() {
           <div className="mt-10 flex gap-4 justify-center">
             <Button
               size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 group"
               onClick={() => navigate("/register")}
             >
               Register Now
+              <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button
               size="lg"
