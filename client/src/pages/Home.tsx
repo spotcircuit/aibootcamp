@@ -65,6 +65,47 @@ export default function Home() {
           </div>
         </section>
 
+        {/* AI Impact Section */}
+        <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              The Impact of AI Today
+            </h2>
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg border bg-card">
+                  <img 
+                    src="/image_1742408440211.png" 
+                    alt="DeepMind's Breakthrough" 
+                    className="w-full"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-2xl font-semibold mb-3">Revolutionary Breakthroughs</h3>
+                    <p className="text-muted-foreground">
+                      From solving protein folding to advancing drug development, AI is transforming scientific discovery and pushing the boundaries of what's possible.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg border bg-card">
+                  <img 
+                    src="/image_1742408487798.png" 
+                    alt="AI Text Generation Scale" 
+                    className="w-full"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-2xl font-semibold mb-3">Massive Scale Impact</h3>
+                    <p className="text-muted-foreground">
+                      AI language models are processing and generating content at unprecedented scales, revolutionizing how we interact with and create information.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <ToolsShowcase />
 
         {/* Schedule Section */}
