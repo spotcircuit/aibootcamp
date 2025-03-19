@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
+import { db } from "./db";
+import { events } from "@shared/schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -13,6 +15,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.get("/api/events", async (_req, res) => {
+    try {
+      const eventsList = await db.select().from(events).orderBy(events.startDate);
+      res.json(eventsList);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/register", async (req, res) => {
     try {
       const data = insertRegistrationSchema.parse(req.body);

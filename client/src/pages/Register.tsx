@@ -4,8 +4,9 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertRegistrationSchema, type InsertRegistration } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BoltIcon, RocketLaunchIcon, SparklesIcon } from "@heroicons/react/24/outline";
@@ -14,12 +15,17 @@ export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
+  const { data: events } = useQuery({
+    queryKey: ['/api/events'],
+  });
+
   const form = useForm<InsertRegistration>({
     resolver: zodResolver(insertRegistrationSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
+      eventId: undefined,
     },
   });
 
@@ -31,7 +37,7 @@ export default function Register() {
     onSuccess: (data) => {
       toast({
         title: "Registration successful!",
-        description: "Thank you for registering. You'll be able to book your sessions soon.",
+        description: "Proceeding to payment...",
       });
       navigate(`/checkout?registrationId=${data.id}`);
     },
@@ -130,6 +136,31 @@ export default function Register() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="eventId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Event</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose an event" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {events?.map((event) => (
+                          <SelectItem key={event.id} value={event.id.toString()}>
+                            {event.name} - ${event.price}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button
                 type="submit"
                 className="w-full"
@@ -137,6 +168,10 @@ export default function Register() {
               >
                 {registration.isPending ? "Registering..." : "Register Now"}
               </Button>
+
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Already have an account? <a href="/login" className="text-primary hover:underline">Login here</a></p>
+              </div>
             </form>
           </Form>
         </div>
