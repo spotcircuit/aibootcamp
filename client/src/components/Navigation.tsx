@@ -19,10 +19,10 @@ export default function Navigation() {
 
   const navItems = [
     { name: "Home", href: "/", icon: <AcademicCapIcon className="w-5 h-5" /> },
-    { name: "What is AI?", href: "/what", icon: <Brain className="w-5 h-5" /> },
-    { name: "Curriculum", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
+    { name: "AI", href: "/what", icon: <Brain className="w-5 h-5" /> },
+    { name: "Learn", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: "Schedule", href: "#schedule", icon: <CalendarIcon className="w-5 h-5" /> },
-    { name: "Testimonials", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
+    { name: "Reviews", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
   ];
 
   return (
@@ -40,18 +40,18 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
-                className="text-primary-foreground/90 hover:text-primary-foreground transition-colors flex items-center gap-2"
+                className="text-primary-foreground/90 hover:text-primary-foreground transition-colors flex items-center gap-2 whitespace-nowrap"
               >
                 {item.icon}
                 <span>{item.name}</span>
               </a>
             ))}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <a href="#faq" className="text-primary-foreground/90 hover:text-primary-foreground transition-colors">
                 <QuestionMarkCircleIcon className="w-5 h-5" />
               </a>
@@ -63,7 +63,7 @@ export default function Navigation() {
                 variant="secondary"
                 className="bg-background text-foreground hover:bg-background/90"
               >
-                Register Now
+                Register
               </Button>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function Navigation() {
               variant="secondary"
               className="w-full mt-4 bg-background text-foreground hover:bg-background/90"
             >
-              Register Now
+              Register
             </Button>
           </div>
         )}
