@@ -13,7 +13,7 @@ export default function WhatIsAI() {
           </h1>
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
-              <div className="overflow-hidden rounded-lg border bg-card">
+              <div className="overflow-hidden rounded-lg bg-card">
                 <img 
                   src="/attached_assets/image_1742408574966.png" 
                   alt="AI Capabilities" 
@@ -34,7 +34,7 @@ export default function WhatIsAI() {
               </div>
             </div>
             <div className="space-y-6">
-              <div className="overflow-hidden rounded-lg border bg-card">
+              <div className="overflow-hidden rounded-lg bg-card">
                 <img 
                   src="/attached_assets/image_1742408591793.png" 
                   alt="AI Evolution" 
