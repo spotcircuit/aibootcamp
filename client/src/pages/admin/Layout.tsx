@@ -1,6 +1,7 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChartBarIcon,
   UsersIcon,
@@ -10,7 +11,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const sidebarItems = [
-  { name: "Dashboard", href: "/admin", icon: <ChartBarIcon className="w-5 h-5" /> },
+  { name: "Dashboard", href: "/admin/dashboard", icon: <ChartBarIcon className="w-5 h-5" /> },
   { name: "Users", href: "/admin/users", icon: <UsersIcon className="w-5 h-5" /> },
   { name: "Sessions", href: "/admin/sessions", icon: <CalendarIcon className="w-5 h-5" /> },
   { name: "Payments", href: "/admin/payments", icon: <CreditCardIcon className="w-5 h-5" /> },
@@ -18,7 +19,24 @@ const sidebarItems = [
 ];
 
 export default function AdminLayout({ children }: PropsWithChildren) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+
+  // Check admin session
+  const { data: user, isError } = useQuery({
+    queryKey: ['/api/user'],
+  });
+
+  useEffect(() => {
+    // Redirect to admin login if not authenticated or not admin
+    if (isError || !user?.isAdmin) {
+      navigate('/admin');
+    }
+  }, [user, isError, navigate]);
+
+  // Don't render anything while checking authentication
+  if (!user?.isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -28,7 +46,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
           <ChartBarIcon className="w-8 h-8" />
           <h1 className="text-xl font-bold">Admin Panel</h1>
         </div>
-        
+
         <nav className="space-y-2">
           {sidebarItems.map((item) => (
             <a
@@ -45,6 +63,23 @@ export default function AdminLayout({ children }: PropsWithChildren) {
             </a>
           ))}
         </nav>
+
+        <div className="mt-auto pt-4 border-t border-primary-foreground/20">
+          <div className="text-sm mb-2">
+            <p className="text-primary-foreground/60">Logged in as</p>
+            <p className="font-medium">{user.email}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full border-primary-foreground/20"
+            onClick={() => {
+              fetch('/api/logout', { method: 'POST' })
+                .then(() => navigate('/admin'));
+            }}
+          >
+            Logout
+          </Button>
+        </div>
       </aside>
 
       {/* Main content */}

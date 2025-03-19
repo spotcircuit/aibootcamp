@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { userLoginSchema, type LoginUser } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { KeyIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
@@ -20,6 +21,17 @@ import { KeyIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 export default function AdminLogin() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+
+  // Check if already logged in as admin
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+  });
+
+  useEffect(() => {
+    if (user?.isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [user, navigate]);
 
   const form = useForm<LoginUser>({
     resolver: zodResolver(userLoginSchema),
@@ -43,7 +55,7 @@ export default function AdminLogin() {
         });
         return;
       }
-      
+
       toast({
         title: "Login successful!",
         description: "Welcome to the admin dashboard.",
@@ -58,6 +70,11 @@ export default function AdminLogin() {
       });
     },
   });
+
+  // Don't render the login form if already logged in as admin
+  if (user?.isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
