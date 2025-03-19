@@ -3,6 +3,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const testimonials = [
   {
+    name: "Chris Cabe",
+    role: "Certified Professional Services Recruiter | Talent Acquisition Leader",
+    content: "I recently completed the first bootcamp and it's very much worth the cost! Not only did I walk away with new tips and ideas on effectively using AI to be more efficient but also got to network with some top tier TA/Recruiting professionals!",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Chris",
+  },
+  {
     name: "Sarah Johnson",
     role: "Data Scientist",
     content: "The AI Basics Bootcamp provided me with a solid foundation in AI concepts. The hands-on projects were invaluable.",
@@ -26,24 +32,6 @@ const testimonials = [
     content: "The practical approach to learning made complex concepts easy to understand.",
     image: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
   },
-  {
-    name: "Lisa Thompson",
-    role: "Business Analyst",
-    content: "I had no technical background, but the bootcamp made AI accessible and engaging.",
-    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
-  },
-  {
-    name: "James Wilson",
-    role: "Tech Lead",
-    content: "The quality of instruction and course materials exceeded my expectations.",
-    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-  },
-  {
-    name: "Anna Martinez",
-    role: "Research Scientist",
-    content: "A comprehensive program that covers both theoretical and practical aspects of AI.",
-    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anna",
-  },
 ];
 
 export default function Testimonials() {
@@ -52,7 +40,7 @@ export default function Testimonials() {
       <h2 className="text-3xl font-bold text-center mb-12">
         What Our Students Say
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {testimonials.map((testimonial) => (
           <Card key={testimonial.name}>
