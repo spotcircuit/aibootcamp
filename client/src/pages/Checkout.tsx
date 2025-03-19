@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ShieldCheckIcon, CreditCardIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
@@ -53,7 +54,7 @@ function CheckoutForm({ registrationId }: { registrationId: string }) {
           title: "Payment Successful",
           description: "Welcome to AI Basics Bootcamp!",
         });
-        
+
         navigate("/");
       }
     } catch (error: any) {
@@ -121,15 +122,52 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="pt-6">
-          <h1 className="text-2xl font-bold text-center mb-6">Complete Your Payment</h1>
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <CheckoutForm registrationId={registrationId} />
-          </Elements>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Security Illustrations */}
+      <div className="relative overflow-hidden bg-primary/5 py-12">
+        <div className="absolute inset-0" style={{ opacity: 0.1 }}>
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="shield-pattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M30 10 L50 20 L50 40 L30 50 L10 40 L10 20 Z" stroke="currentColor" strokeWidth="0.5" fill="none"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#shield-pattern)"/>
+          </svg>
+        </div>
+
+        {/* Security Icons */}
+        <div className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
+          <ShieldCheckIcon className="w-16 h-16 text-primary opacity-20" />
+        </div>
+        <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2">
+          <LockClosedIcon className="w-12 h-12 text-primary opacity-20" />
+        </div>
+        <div className="absolute bottom-1/4 left-1/3 transform -translate-x-1/2">
+          <CreditCardIcon className="w-10 h-10 text-primary opacity-20" />
+        </div>
+
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-3xl font-bold mb-4">Secure Checkout</h1>
+            <p className="text-muted-foreground">
+              Complete your registration with our secure payment system
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Form */}
+      <div className="container mx-auto px-4 py-12">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="pt-6">
+            <h2 className="text-2xl font-bold text-center mb-6">Complete Your Payment</h2>
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <CheckoutForm registrationId={registrationId!} />
+            </Elements>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
