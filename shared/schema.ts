@@ -7,7 +7,7 @@ export const registrations = pgTable("registrations", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
-  amount: numeric("amount").notNull(),
+  amount: numeric("amount"),
   stripePaymentId: text("stripe_payment_id"),
   emailSent: text("email_sent").default("false"),
 });

@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
+
   const form = useForm<InsertRegistration>({
     resolver: zodResolver(insertRegistrationSchema),
     defaultValues: {
@@ -30,9 +30,11 @@ export default function Register() {
     onSuccess: (data) => {
       toast({
         title: "Registration successful!",
-        description: "Proceeding to payment...",
+        description: "Thank you for registering. You'll be able to book your sessions soon.",
       });
-      navigate(`/checkout?registrationId=${data.id}`);
+      // Instead of redirecting to payment, we'll redirect to home for now
+      // Later this will go to a booking page
+      navigate("/");
     },
     onError: (error) => {
       toast({
@@ -47,7 +49,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8">
         <h1 className="text-2xl font-bold text-center mb-6">Register for AI Basics Bootcamp</h1>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => registration.mutate(data))} className="space-y-6">
             <FormField
@@ -97,7 +99,7 @@ export default function Register() {
               className="w-full"
               disabled={registration.isPending}
             >
-              {registration.isPending ? "Registering..." : "Continue to Payment"}
+              {registration.isPending ? "Registering..." : "Register Now"}
             </Button>
           </form>
         </Form>

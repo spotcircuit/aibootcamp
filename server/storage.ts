@@ -15,7 +15,6 @@ export class PostgresStorage implements IStorage {
       .values({
         ...data,
         phone: data.phone || null,
-        amount: "299.99",
         stripePaymentId: null,
         emailSent: "false",
       })
