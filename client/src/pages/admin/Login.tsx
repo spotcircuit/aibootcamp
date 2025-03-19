@@ -56,7 +56,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Invalidate the user query to force a refresh of the session state
+      // Clear any existing queries and fetch fresh data
+      queryClient.clear();
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
 
       toast({
@@ -65,7 +66,7 @@ export default function AdminLogin() {
       });
 
       // Navigate to admin dashboard
-      navigate("/admin/dashboard");
+      window.location.href = "/admin/dashboard";
     },
     onError: (error) => {
       toast({
