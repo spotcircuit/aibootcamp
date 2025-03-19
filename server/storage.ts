@@ -1,4 +1,14 @@
-import { type Registration, type InsertRegistration } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { neon } from "@neondatabase/serverless";
+import { type Registration, type InsertRegistration, registrations } from "@shared/schema";
+import { eq } from "drizzle-orm";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+const sql = neon(process.env.DATABASE_URL);
+const db = drizzle(sql);
 
 export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
@@ -7,52 +17,53 @@ export interface IStorage {
   updateEmailStatus(id: number): Promise<Registration>;
 }
 
-export class MemStorage implements IStorage {
-  private registrations: Map<number, Registration>;
-  private currentId: number;
-
-  constructor() {
-    this.registrations = new Map();
-    this.currentId = 1;
-  }
-
+export class PostgresStorage implements IStorage {
   async createRegistration(data: InsertRegistration): Promise<Registration> {
-    const id = this.currentId++;
-    const registration: Registration = {
-      id,
-      ...data,
-      phone: data.phone || null,
-      amount: "299.99",
-      stripePaymentId: null,
-      emailSent: "false",
-    };
-    this.registrations.set(id, registration);
+    const [registration] = await db.insert(registrations)
+      .values({
+        ...data,
+        phone: data.phone || null,
+        amount: "299.99",
+        stripePaymentId: null,
+        emailSent: "false",
+      })
+      .returning();
+
     return registration;
   }
 
   async getRegistrations(): Promise<Registration[]> {
-    return Array.from(this.registrations.values());
+    return await db.select().from(registrations);
   }
 
   async updatePaymentStatus(id: number, paymentId: string): Promise<Registration> {
-    const registration = this.registrations.get(id);
+    const [registration] = await db
+      .update(registrations)
+      .set({ stripePaymentId: paymentId })
+      .where(eq(registrations.id, id))
+      .returning();
+
     if (!registration) {
       throw new Error("Registration not found");
     }
-    const updated = { ...registration, stripePaymentId: paymentId };
-    this.registrations.set(id, updated);
-    return updated;
+
+    return registration;
   }
 
   async updateEmailStatus(id: number): Promise<Registration> {
-    const registration = this.registrations.get(id);
+    const [registration] = await db
+      .update(registrations)
+      .set({ emailSent: "true" })
+      .where(eq(registrations.id, id))
+      .returning();
+
     if (!registration) {
       throw new Error("Registration not found");
     }
-    const updated = { ...registration, emailSent: "true" };
-    this.registrations.set(id, updated);
-    return updated;
+
+    return registration;
   }
 }
 
-export const storage = new MemStorage();
+// Export a single instance to be used throughout the application
+export const storage = new PostgresStorage();
