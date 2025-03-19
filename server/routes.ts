@@ -6,6 +6,9 @@ import { userAuthSchema, userLoginSchema } from "@shared/schema";
 import { db } from "./db";
 import { events, registrations } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
+import { setupAuth, isAuthenticated, isAdmin } from "./auth";
+import passport from 'passport'; // Add passport import
+
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -16,6 +19,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
+
   app.get("/api/events", async (_req, res) => {
     try {
       const eventsList = await db.select().from(events).orderBy(events.startDate);
@@ -25,12 +31,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/registrations", async (req, res) => {
+  app.get("/api/registrations", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
       const userRegistrations = await db
         .select()
         .from(registrations)
@@ -46,66 +48,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = userAuthSchema.parse(req.body);
       const user = await storage.createUser(data);
-      res.json(user);
+
+      // Log the user in after registration
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed after registration" });
+        }
+        res.json(user);
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.post("/api/login", async (req, res) => {
-    try {
-      const data = userLoginSchema.parse(req.body);
-      const user = await storage.getUserByEmail(data.email);
-
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: err.message });
+      }
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: info.message || "Invalid credentials" });
       }
-
-      const isValid = await storage.validateUserPassword(user, data.password);
-      if (!isValid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Send user data without password
-      const { password, ...userData } = user;
-      res.json(userData);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return res.status(500).json({ message: loginErr.message });
+        }
+        const { password, ...userData } = user;
+        return res.json(userData);
+      });
+    })(req, res, next);
   });
 
-  app.post("/api/admin/login", async (req, res) => {
-    try {
-      const data = userLoginSchema.parse(req.body);
-      const user = await storage.getUserByEmail(data.email);
-
+  app.post("/api/admin/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: err.message });
+      }
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: info.message || "Invalid credentials" });
       }
-
-      const isValid = await storage.validateUserPassword(user, data.password);
-      if (!isValid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
       if (!user.isAdmin) {
         return res.status(403).json({ message: "Access denied" });
       }
-
-      // Send user data without password
-      const { password, ...userData } = user;
-      res.json(userData);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return res.status(500).json({ message: loginErr.message });
+        }
+        const { password, ...userData } = user;
+        return res.json(userData);
+      });
+    })(req, res, next);
   });
 
-  app.post("/api/register-event", async (req, res) => {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
+  app.post("/api/logout", isAuthenticated, (req, res) => {
+    req.logout(() => {
+      res.json({ success: true });
+    });
+  });
 
+  app.post("/api/register-event", isAuthenticated, async (req, res) => {
+    try {
       const { eventId } = req.body;
       const [event] = await db.select().from(events).where(eq(events.id, eventId));
 
@@ -156,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/confirm-payment", async (req, res) => {
+  app.post("/api/confirm-payment", isAuthenticated, async (req, res) => {
     try {
       const { registrationId, paymentIntentId } = req.body;
       await storage.updatePaymentStatus(registrationId, paymentIntentId);
@@ -166,12 +168,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/events", async (req, res) => {
+  app.post("/api/admin/events", isAdmin, async (req, res) => {
     try {
-      if (!req.user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
       const [event] = await db
         .insert(events)
         .values({

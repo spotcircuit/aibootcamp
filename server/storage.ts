@@ -1,7 +1,11 @@
 import { type Registration, type InsertRegistration, type User, type InsertUser, registrations, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { db } from "./db";
+import { db, pool } from "./db";
 import bcrypt from "bcryptjs";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+const PostgresStore = connectPg(session);
 
 export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
@@ -11,9 +15,19 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   validateUserPassword(user: User, password: string): Promise<boolean>;
+  sessionStore: session.Store;
 }
 
 export class PostgresStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
   async createRegistration(data: InsertRegistration): Promise<Registration> {
     // Check if user exists
     const [existingUser] = await db
