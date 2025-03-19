@@ -28,10 +28,6 @@ export const registrations = pgTable("registrations", {
   id: serial("id").primaryKey(),
   userId: numeric("user_id").references(() => users.id),
   eventId: numeric("event_id").references(() => events.id),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone"),
-  amount: numeric("amount"),
   stripePaymentId: text("stripe_payment_id"),
   emailSent: text("email_sent").default("false"),
   isPaid: boolean("is_paid").default(false),
@@ -57,24 +53,9 @@ export const userAuthSchema = createInsertSchema(users)
     role: z.enum(["customer", "admin"]).default("customer"),
   });
 
-// Schema for registration
-export const insertRegistrationSchema = createInsertSchema(registrations)
-  .pick({
-    name: true,
-    email: true,
-    phone: true,
-    eventId: true,
-  })
-  .extend({
-    email: z.string().email("Please enter a valid email address"),
-    phone: z.string().optional(),
-    eventId: z.number().int().positive("Please select an event"),
-  });
-
 // Export types
 export type InsertUser = z.infer<typeof userAuthSchema>;
 export type LoginUser = z.infer<typeof userLoginSchema>;
 export type User = typeof users.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type Registration = typeof registrations.$inferSelect;
-export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;

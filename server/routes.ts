@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertRegistrationSchema } from "@shared/schema";
+import { userAuthSchema } from "@shared/schema";
 import { db } from "./db";
 import { events } from "@shared/schema";
 
@@ -26,25 +26,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/register", async (req, res) => {
     try {
-      const data = insertRegistrationSchema.parse(req.body);
-      const registration = await storage.createRegistration(data);
-      res.json(registration);
+      const data = userAuthSchema.parse(req.body);
+      const user = await storage.createUser(data);
+      res.json(user);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.post("/api/create-payment-intent", async (req, res) => {
-    try {
-      const { registrationId } = req.body;
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: 29999, // $299.99
-        currency: "usd",
-        metadata: { registrationId },
-      });
-      res.json({ clientSecret: paymentIntent.client_secret });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
     }
   });
 

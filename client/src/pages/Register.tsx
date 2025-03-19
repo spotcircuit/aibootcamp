@@ -4,9 +4,8 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { insertRegistrationSchema, type InsertRegistration } from "@shared/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { userAuthSchema, type InsertUser } from "@shared/schema";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BoltIcon, RocketLaunchIcon, SparklesIcon } from "@heroicons/react/24/outline";
@@ -15,31 +14,26 @@ export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const { data: events } = useQuery({
-    queryKey: ['/api/events'],
-  });
-
-  const form = useForm<InsertRegistration>({
-    resolver: zodResolver(insertRegistrationSchema),
+  const form = useForm<InsertUser>({
+    resolver: zodResolver(userAuthSchema),
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
-      eventId: undefined,
+      password: "",
     },
   });
 
   const registration = useMutation({
-    mutationFn: async (data: InsertRegistration) => {
+    mutationFn: async (data: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", data);
       return res.json();
     },
     onSuccess: (data) => {
       toast({
         title: "Registration successful!",
-        description: "Proceeding to payment...",
+        description: "Welcome to AI Basics Bootcamp! Please log in to view and register for events.",
       });
-      navigate(`/checkout?registrationId=${data.id}`);
+      navigate("/login");
     },
     onError: (error) => {
       toast({
@@ -81,8 +75,7 @@ export default function Register() {
           <div className="max-w-2xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">Join Our AI Bootcamp</h1>
             <p className="text-lg text-muted-foreground">
-              Start your journey into the future of technology. Learn AI from industry experts
-              and become part of our growing community of innovators.
+              Create your account to explore our AI courses and start your learning journey.
             </p>
           </div>
         </div>
@@ -91,7 +84,7 @@ export default function Register() {
       {/* Registration Form */}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto bg-card p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold text-center mb-6">Register Now</h2>
+          <h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => registration.mutate(data))} className="space-y-6">
               <FormField
@@ -124,38 +117,13 @@ export default function Register() {
 
               <FormField
                 control={form.control}
-                name="phone"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone (Optional)</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="eventId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Event</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose an event" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {events?.map((event) => (
-                          <SelectItem key={event.id} value={event.id.toString()}>
-                            {event.name} - ${event.price}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -166,7 +134,7 @@ export default function Register() {
                 className="w-full"
                 disabled={registration.isPending}
               >
-                {registration.isPending ? "Registering..." : "Register Now"}
+                {registration.isPending ? "Creating Account..." : "Create Account"}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
