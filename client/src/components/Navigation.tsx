@@ -11,7 +11,7 @@ import {
   QuestionMarkCircleIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
-import { Brain } from "lucide-react"; // Using lucide-react's Brain icon instead
+import { Brain } from "lucide-react";
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +23,6 @@ export default function Navigation() {
     { name: "Curriculum", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: "Schedule", href: "#schedule", icon: <CalendarIcon className="w-5 h-5" /> },
     { name: "Testimonials", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
-    { name: "FAQ", href: "#faq", icon: <QuestionMarkCircleIcon className="w-5 h-5" /> },
   ];
 
   return (
@@ -53,6 +52,9 @@ export default function Navigation() {
               </a>
             ))}
             <div className="flex items-center gap-4">
+              <a href="#faq" className="text-primary-foreground/90 hover:text-primary-foreground transition-colors">
+                <QuestionMarkCircleIcon className="w-5 h-5" />
+              </a>
               <Link href="/admin" className="text-primary-foreground/90 hover:text-primary-foreground transition-colors">
                 <ShieldCheckIcon className="w-5 h-5" />
               </Link>
@@ -94,6 +96,9 @@ export default function Navigation() {
               </a>
             ))}
             <div className="flex items-center gap-4 py-2">
+              <a href="#faq" className="text-primary-foreground/90 hover:text-primary-foreground">
+                <QuestionMarkCircleIcon className="w-5 h-5" />
+              </a>
               <Link href="/admin" className="text-primary-foreground/90 hover:text-primary-foreground">
                 <ShieldCheckIcon className="w-5 h-5" />
               </Link>
