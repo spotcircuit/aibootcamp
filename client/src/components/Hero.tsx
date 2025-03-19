@@ -5,7 +5,8 @@ import {
   LightBulbIcon,
   BeakerIcon,
   CpuChipIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 
 export default function Hero() {
@@ -48,6 +49,17 @@ export default function Hero() {
             <span className="block">Master AI Fundamentals</span>
             <span className="block text-primary mt-2">in Just 12 Weeks</span>
           </h1>
+
+          {/* Admin Login Link */}
+          <div className="mt-2">
+            <button 
+              onClick={() => navigate("/admin")}
+              className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ShieldCheckIcon className="w-4 h-4 mr-1" />
+              Admin Access
+            </button>
+          </div>
 
           <p className="mt-6 max-w-2xl mx-auto text-xl text-muted-foreground">
             Join our comprehensive bootcamp and learn the foundations of Artificial Intelligence
