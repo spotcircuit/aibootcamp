@@ -14,6 +14,17 @@ export default function Hero() {
 
   return (
     <div className="relative bg-background overflow-hidden">
+      {/* Add Admin Login Link */}
+      <div className="absolute top-4 right-4">
+        <button 
+          onClick={() => navigate("/admin")}
+          className="p-2 rounded-full hover:bg-primary/10 transition-colors group"
+          aria-label="Admin Login"
+        >
+          <ShieldCheckIcon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+        </button>
+      </div>
+
       {/* AI Grid Background */}
       <div className="absolute inset-0 z-0" style={{ opacity: 0.1 }}>
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -49,17 +60,6 @@ export default function Hero() {
             <span className="block">Master AI Fundamentals</span>
             <span className="block text-primary mt-2">in Just 12 Weeks</span>
           </h1>
-
-          {/* Admin Login Link */}
-          <div className="mt-2">
-            <button 
-              onClick={() => navigate("/admin")}
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ShieldCheckIcon className="w-4 h-4 mr-1" />
-              Admin Access
-            </button>
-          </div>
 
           <p className="mt-6 max-w-2xl mx-auto text-xl text-muted-foreground">
             Join our comprehensive bootcamp and learn the foundations of Artificial Intelligence
