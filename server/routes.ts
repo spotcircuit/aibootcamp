@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { userAuthSchema } from "@shared/schema";
+import { userAuthSchema, userLoginSchema } from "@shared/schema";
 import { db } from "./db";
 import { events } from "@shared/schema";
 
@@ -29,6 +29,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = userAuthSchema.parse(req.body);
       const user = await storage.createUser(data);
       res.json(user);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const data = userLoginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(data.email);
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValid = await storage.validateUserPassword(user, data.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Send user data without password
+      const { password, ...userData } = user;
+      res.json(userData);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
