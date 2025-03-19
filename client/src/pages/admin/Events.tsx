@@ -43,8 +43,8 @@ const eventSchema = z.object({
   name: z.string().min(1, "Name is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  capacity: z.number().min(1, "Capacity must be at least 1"),
-  price: z.number().min(0, "Price cannot be negative"),
+  capacity: z.coerce.number().min(1, "Capacity must be at least 1"),
+  price: z.coerce.number().min(0, "Price cannot be negative"),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -123,8 +123,8 @@ export default function EventsManagement() {
       name: event.name,
       startDate: new Date(event.startDate).toISOString().slice(0, 16),
       endDate: new Date(event.endDate).toISOString().slice(0, 16),
-      capacity: event.capacity,
-      price: event.price,
+      capacity: Number(event.capacity),
+      price: Number(event.price),
     });
     setIsDialogOpen(true);
   };
@@ -292,9 +292,9 @@ export default function EventsManagement() {
                     <FormLabel>Capacity</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number" 
+                        type="number"
+                        min="1"
                         {...field} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -309,10 +309,10 @@ export default function EventsManagement() {
                     <FormLabel>Price ($)</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number" 
+                        type="number"
+                        min="0"
                         step="0.01"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
