@@ -10,9 +10,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 const sidebarItems = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: <ChartBarIcon className="w-5 h-5" /> },
+  { name: "Dashboard", href: "/admin", icon: <ChartBarIcon className="w-5 h-5" /> },
   { name: "Users", href: "/admin/users", icon: <UsersIcon className="w-5 h-5" /> },
-  { name: "Sessions", href: "/admin/sessions", icon: <CalendarIcon className="w-5 h-5" /> },
+  { name: "Events", href: "/admin/events", icon: <CalendarIcon className="w-5 h-5" /> },
   { name: "Payments", href: "/admin/payments", icon: <CreditCardIcon className="w-5 h-5" /> },
   { name: "Settings", href: "/admin/settings", icon: <Cog8ToothIcon className="w-5 h-5" /> },
 ];

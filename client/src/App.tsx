@@ -8,6 +8,7 @@ import Login from "@/pages/Login";
 import Checkout from "@/pages/Checkout";
 import CustomerDashboard from "@/pages/customer/Dashboard";
 import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminEvents from "@/pages/admin/Events";
 import AdminLayout from "@/pages/admin/Layout";
 import NotFound from "@/pages/not-found";
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/dashboard" component={CustomerDashboard} />
+      {/* Admin routes */}
       <Route path="/admin">
         {() => (
           <AdminLayout>
@@ -33,10 +35,10 @@ function Router() {
           </AdminLayout>
         )}
       </Route>
-      <Route path="/admin/sessions">
+      <Route path="/admin/events">
         {() => (
           <AdminLayout>
-            <div>Sessions Management</div>
+            <AdminEvents />
           </AdminLayout>
         )}
       </Route>
