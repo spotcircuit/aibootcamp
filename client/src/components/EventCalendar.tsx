@@ -5,7 +5,6 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
-import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -111,8 +110,7 @@ export default function EventCalendar() {
                 dayGridPlugin,
                 timeGridPlugin,
                 interactionPlugin,
-                listPlugin,
-                googleCalendarPlugin
+                listPlugin
               ]}
               initialView="dayGridMonth"
               headerToolbar={{
@@ -122,7 +120,6 @@ export default function EventCalendar() {
               }}
               events={calendarEvents}
               height="auto"
-              googleCalendarApiKey={import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY}
               eventClick={(info) => {
                 const event = info.event.extendedProps.event;
                 setSelectedEvent(event);

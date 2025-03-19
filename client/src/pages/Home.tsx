@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import ToolsShowcase from "@/components/ToolsShowcase";
+import EventCalendar from "@/components/EventCalendar";
 import { useLocation } from "wouter";
 import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
 
@@ -30,53 +31,6 @@ export default function Home() {
       icon: <Workflow className="w-8 h-8 text-primary" />,
       title: "AI Workflows",
       description: "Build efficient workflows combining multiple AI tools and services.",
-    },
-  ];
-
-  const schedule = [
-    {
-      week: "Week 1-3",
-      title: "Foundations & Theory",
-      topics: [
-        "Introduction to AI & ML",
-        "Neural Networks Architecture",
-        "Deep Learning Fundamentals",
-        "Data Preprocessing",
-        "Model Training Basics"
-      ],
-    },
-    {
-      week: "Week 4-6",
-      title: "Applied AI & Tools",
-      topics: [
-        "Natural Language Processing",
-        "Computer Vision Basics",
-        "Generative AI Models",
-        "ChatGPT & LLMs",
-        "Image Generation"
-      ],
-    },
-    {
-      week: "Week 7-9",
-      title: "Integration & Development",
-      topics: [
-        "RESTful API Integration",
-        "Cloud AI Services",
-        "Model Deployment",
-        "Error Handling",
-        "Performance Optimization"
-      ],
-    },
-    {
-      week: "Week 10-12",
-      title: "Advanced Topics",
-      topics: [
-        "Advanced Prompt Engineering",
-        "AI Ethics & Safety",
-        "Project Architecture",
-        "Real-world Applications",
-        "Final Project Development"
-      ],
     },
   ];
 
@@ -116,27 +70,9 @@ export default function Home() {
         {/* Schedule Section */}
         <section id="schedule" className="py-20">
           <h2 className="text-3xl font-bold text-center mb-12">
-            Your 12-Week Learning Journey
+            Available Events
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {schedule.map((period) => (
-              <div key={period.week} className="p-6 rounded-lg bg-card border hover:shadow-lg transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <Calendar className="w-6 h-6 text-primary" />
-                  <h3 className="font-semibold">{period.week}</h3>
-                </div>
-                <h4 className="text-lg font-semibold mb-4">{period.title}</h4>
-                <ul className="space-y-3">
-                  {period.topics.map((topic) => (
-                    <li key={topic} className="text-muted-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 flex-shrink-0" />
-                      <span>{topic}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <EventCalendar />
         </section>
 
         {/* Outcomes Section */}
