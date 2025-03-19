@@ -4,7 +4,8 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import { userAuthSchema, userLoginSchema } from "@shared/schema";
 import { db } from "./db";
-import { events } from "@shared/schema";
+import { events, registrations } from "@shared/schema";
+import { and, eq } from "drizzle-orm";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -19,6 +20,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const eventsList = await db.select().from(events).orderBy(events.startDate);
       res.json(eventsList);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/registrations", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userRegistrations = await db
+        .select()
+        .from(registrations)
+        .where(eq(registrations.userId, req.user.id));
+
+      res.json(userRegistrations);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -53,6 +71,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userData);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/register-event", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { eventId } = req.body;
+      const [event] = await db.select().from(events).where(eq(events.id, eventId));
+
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      // Check if already registered
+      const [existingRegistration] = await db
+        .select()
+        .from(registrations)
+        .where(
+          and(
+            eq(registrations.userId, req.user.id),
+            eq(registrations.eventId, eventId)
+          )
+        );
+
+      if (existingRegistration?.isPaid) {
+        return res.status(400).json({ message: "Already registered for this event" });
+      }
+
+      // Create registration
+      const [registration] = await db
+        .insert(registrations)
+        .values({
+          userId: req.user.id,
+          eventId: eventId,
+          stripePaymentId: null,
+          emailSent: "false",
+          isPaid: false,
+        })
+        .returning();
+
+      // Create Stripe payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(Number(event.price) * 100), // Convert to cents
+        currency: "usd",
+        metadata: { registrationId: registration.id },
+      });
+
+      res.json({
+        id: registration.id,
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
