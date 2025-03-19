@@ -39,7 +39,7 @@ export default function Login() {
         title: "Login successful!",
         description: "Welcome back to AI Basics Bootcamp!",
       });
-      navigate("/");
+      navigate("/dashboard");
     },
     onError: (error) => {
       toast({
