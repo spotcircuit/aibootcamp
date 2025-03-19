@@ -1,22 +1,52 @@
-import { type Registration, type InsertRegistration, registrations } from "@shared/schema";
+import { type Registration, type InsertRegistration, type User, type InsertUser, registrations, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
   getRegistrations(): Promise<Registration[]>;
   updatePaymentStatus(id: number, paymentId: string): Promise<Registration>;
   updateEmailStatus(id: number): Promise<Registration>;
+  createUser(user: InsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  validateUserPassword(user: User, password: string): Promise<boolean>;
 }
 
 export class PostgresStorage implements IStorage {
   async createRegistration(data: InsertRegistration): Promise<Registration> {
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, data.email));
+
+    let userId = existingUser?.id;
+
+    if (!userId) {
+      // Create a temporary password that user will need to change
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      const [newUser] = await db.insert(users)
+        .values({
+          email: data.email,
+          name: data.name,
+          password: hashedPassword,
+        })
+        .returning();
+
+      userId = newUser.id;
+    }
+
     const [registration] = await db.insert(registrations)
       .values({
         ...data,
+        userId,
         phone: data.phone || null,
         stripePaymentId: null,
         emailSent: "false",
+        isPaid: false,
       })
       .returning();
 
@@ -30,7 +60,10 @@ export class PostgresStorage implements IStorage {
   async updatePaymentStatus(id: number, paymentId: string): Promise<Registration> {
     const [registration] = await db
       .update(registrations)
-      .set({ stripePaymentId: paymentId })
+      .set({ 
+        stripePaymentId: paymentId,
+        isPaid: true,
+      })
       .where(eq(registrations.id, id))
       .returning();
 
@@ -54,7 +87,41 @@ export class PostgresStorage implements IStorage {
 
     return registration;
   }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, userData.email));
+
+    if (existingUser) {
+      throw new Error("User with this email already exists");
+    }
+
+    const [user] = await db.insert(users)
+      .values({
+        ...userData,
+        password: hashedPassword,
+      })
+      .returning();
+
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    return user;
+  }
+
+  async validateUserPassword(user: User, password: string): Promise<boolean> {
+    return await bcrypt.compare(password, user.password);
+  }
 }
 
-// Export a single instance to be used throughout the application
 export const storage = new PostgresStorage();
