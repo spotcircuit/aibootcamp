@@ -29,7 +29,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { z } from "zod";
 
@@ -43,9 +43,11 @@ const eventSchema = z.object({
 
 type EventFormData = z.infer<typeof eventSchema>;
 
+type DialogMode = "create" | "edit" | "view";
+
 export default function AdminDashboard() {
-  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<DialogMode>("create");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const { toast } = useToast();
 
@@ -75,7 +77,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      setIsEventDialogOpen(false);
+      setIsDialogOpen(false);
       createForm.reset();
       toast({
         title: "Event created",
@@ -98,7 +100,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      setIsEditDialogOpen(false);
+      setIsDialogOpen(false);
       setSelectedEvent(null);
       editForm.reset();
       toast({
@@ -124,21 +126,140 @@ export default function AdminDashboard() {
       capacity: Number(event.capacity),
       price: Number(event.price),
     });
-    setIsEditDialogOpen(true);
+    setDialogMode("edit");
+    setIsDialogOpen(true);
+  };
+
+  const handleView = (event: Event) => {
+    setSelectedEvent(event);
+    setDialogMode("view");
+    setIsDialogOpen(true);
+  };
+
+  const handleCreateNew = () => {
+    setDialogMode("create");
+    setIsDialogOpen(true);
   };
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Create Event</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
-            </DialogHeader>
+        <Button onClick={handleCreateNew}>Create Event</Button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Events</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{events?.length || 0}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {events?.map((event) => (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <button
+                      onClick={() => handleView(event)}
+                      className="text-primary hover:underline text-left"
+                    >
+                      {event.name}
+                    </button>
+                  </TableCell>
+                  <TableCell>{new Date(event.startDate).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(event.endDate).toLocaleString()}</TableCell>
+                  <TableCell>{event.capacity}</TableCell>
+                  <TableCell>${event.price}</TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEdit(event)}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Event Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogMode === "create" ? "Create New Event" : 
+               dialogMode === "edit" ? "Edit Event" : 
+               selectedEvent?.name}
+            </DialogTitle>
+            {dialogMode === "view" && selectedEvent && (
+              <DialogDescription>
+                Event Details
+              </DialogDescription>
+            )}
+          </DialogHeader>
+
+          {dialogMode === "view" && selectedEvent ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Start Date</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(selectedEvent.startDate).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">End Date</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(selectedEvent.endDate).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Capacity</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedEvent.capacity} seats
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Price</p>
+                  <p className="text-sm text-muted-foreground">
+                    ${selectedEvent.price}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleEdit(selectedEvent)}
+                >
+                  Edit Event
+                </Button>
+              </div>
+            </div>
+          ) : dialogMode === "create" ? (
             <Form {...createForm}>
               <form onSubmit={createForm.handleSubmit((data) => createEvent.mutate(data))} className="space-y-4">
                 <FormField
@@ -220,155 +341,96 @@ export default function AdminDashboard() {
                 </Button>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{events?.length || 0}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>Capacity</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {events?.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell>{event.name}</TableCell>
-                  <TableCell>{new Date(event.startDate).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(event.endDate).toLocaleString()}</TableCell>
-                  <TableCell>{event.capacity}</TableCell>
-                  <TableCell>${event.price}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEdit(event)}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Edit Event Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Event</DialogTitle>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form 
-              onSubmit={editForm.handleSubmit((data) => {
-                if (selectedEvent) {
-                  editEvent.mutate({ ...data, id: selectedEvent.id });
-                }
-              })} 
-              className="space-y-4"
-            >
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <Input type="datetime-local" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                      <Input type="datetime-local" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="capacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Capacity</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price ($)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={editEvent.isPending}>
-                {editEvent.isPending ? "Updating..." : "Update Event"}
-              </Button>
-            </form>
-          </Form>
+          ) : (
+            <Form {...editForm}>
+              <form 
+                onSubmit={editForm.handleSubmit((data) => {
+                  if (selectedEvent) {
+                    editEvent.mutate({ ...data, id: selectedEvent.id });
+                  }
+                })} 
+                className="space-y-4"
+              >
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacity</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={editEvent.isPending}>
+                  {editEvent.isPending ? "Updating..." : "Update Event"}
+                </Button>
+              </form>
+            </Form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
