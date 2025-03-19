@@ -1,14 +1,6 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { neon } from "@neondatabase/serverless";
 import { type Registration, type InsertRegistration, registrations } from "@shared/schema";
 import { eq } from "drizzle-orm";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set");
-}
-
-const sql = neon(process.env.DATABASE_URL);
-const db = drizzle(sql);
+import { db } from "./db";
 
 export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
