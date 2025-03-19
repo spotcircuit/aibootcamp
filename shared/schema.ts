@@ -18,8 +18,14 @@ export const events = pgTable("events", {
   name: text("name").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  location: text("location").notNull(),
+  duration: text("duration").notNull(),
   capacity: numeric("capacity").notNull(),
   price: numeric("price").notNull(),
+  contact: text("contact").notNull(),
+  agenda: text("agenda").notNull(),
+  inclusions: text("inclusions"),
+  bonus: text("bonus"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
