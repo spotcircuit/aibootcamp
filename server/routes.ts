@@ -14,7 +14,11 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 // Configure multer for file uploads
+import fs from 'fs';
 import multer from 'multer';
+import { s3Client, BUCKET_NAME } from './s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { images } from '@shared/schema';
 const upload = multer({ dest: 'uploads/' });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -43,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await s3Client.send(new PutObjectCommand(uploadParams));
       
       // Save to database
-      const image = await db.insert(images).values({
+      const [image] = await db.insert(images).values({
         filename: req.file.originalname,
         path: `images/uploads/${req.file.originalname}`,
       }).returning();
