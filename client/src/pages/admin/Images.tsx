@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,12 @@ export default function ImagesManagement() {
       try {
         const formData = new FormData();
         formData.append('image', file);
-
+        
         const response = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
-
+        
         if (!response.ok) {
           throw new Error('Upload failed');
         }
