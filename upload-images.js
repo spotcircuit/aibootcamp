@@ -1,8 +1,19 @@
 
 const fs = require('fs');
 const path = require('path');
-const { s3Client, BUCKET_NAME } = require('./server/s3');
-const { PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+// Create S3 client
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: "https://object-storage.nw.r.appspot.com",
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY
+  }
+});
+
+const BUCKET_NAME = process.env.S3_BUCKET;
 
 async function uploadImages() {
   const imageDir = './attached_assets';
@@ -25,4 +36,4 @@ async function uploadImages() {
   }
 }
 
-uploadImages();
+uploadImages().catch(console.error);
