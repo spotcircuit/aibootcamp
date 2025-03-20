@@ -68,35 +68,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Prompting Section */}
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-center mb-8">Mastering AI Prompts</h3>
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <img 
-                  src={`${BUCKET_URL}/images/homepage/prompting_methods.png`}
-                  alt="Prompting Methods" 
-                  className="rounded-lg shadow-xl w-full"
-                />
-              </div>
-              <div>
-                <h4 className="text-xl font-semibold mb-4">8 Prompt Engineering Methods</h4>
-                <ul className="space-y-3">
-                  <li>1. Zero-Shot Learning</li>
-                  <li>2. One-Shot Learning</li>
-                  <li>3. Few-Shot Learning</li>
-                  <li>4. Chain-of-Thought Prompting</li>
-                  <li>5. Iterative Prompting</li>
-                  <li>6. Negative Prompting</li>
-                  <li>7. Hybrid Prompting</li>
-                  <li>8. Prompt Chaining</li>
-                </ul>
-                <p className="mt-4 text-muted-foreground">
-                  Learn how to effectively communicate with AI models using these advanced prompting techniques.
-                </p>
-              </div>
-            </div>
-          </div>
+          
         </section>
 
         {/* Hands-on Training Section */}
