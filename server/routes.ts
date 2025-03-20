@@ -57,6 +57,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/images", async (_req, res) => {
+    try {
+      const imagesList = await db.select().from(images);
+      res.json(imagesList);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/events", async (_req, res) => {
     try {
       const eventsList = await db.select().from(events).orderBy(events.startDate);
