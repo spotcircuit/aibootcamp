@@ -17,23 +17,23 @@ export default function Home() {
   const modules = [
     {
       icon: <Brain className="w-8 h-8 text-primary" />,
-      title: "AI Fundamentals",
-      description: "Learn the core concepts of artificial intelligence and machine learning.",
+      title: "What is AI?",
+      description: "Learn the fundamentals of artificial intelligence and its core concepts.",
     },
     {
       icon: <MessageSquare className="w-8 h-8 text-primary" />,
-      title: "Prompt Engineering",
-      description: "Master the art of crafting effective prompts for AI models.",
+      title: "Tool Building",
+      description: "Create your own AI-powered tools and applications.",
     },
     {
       icon: <Code className="w-8 h-8 text-primary" />,
-      title: "AI Integration",
-      description: "Implement AI solutions in real-world applications and systems.",
+      title: "Basics of Talent Intelligence",
+      description: "Understand how AI is transforming recruitment and talent management.",
     },
     {
       icon: <Workflow className="w-8 h-8 text-primary" />,
-      title: "AI Workflows",
-      description: "Build efficient workflows combining multiple AI tools and services.",
+      title: "AI's Impact on Jobs",
+      description: "Explore how AI is reshaping the economy and job market.",
     },
   ];
 
