@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Project"
+runButton = "Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -40,6 +40,19 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Development Server"
+author = 38582706
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-c612143e-3018-4b8b-94e9-6f7fea66e6e9"
