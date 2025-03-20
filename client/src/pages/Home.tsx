@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
 import { BUCKET_URL } from "@/lib/constants";
 import BootcampGallery from "@/components/BootcampGallery"; // Import the new component
+import AIToolsShowcase from "@/components/AIToolsShowcase"; // Import the AI tools showcase component
 
 
 export default function Home() {
@@ -219,6 +220,7 @@ export default function Home() {
         </section>
 
         <ToolsShowcase />
+        <AIToolsShowcase /> {/* Added AIToolsShowcase component */}
         <BootcampGallery /> {/* Added BootcampGallery component */}
 
         {/* Schedule Section */}
