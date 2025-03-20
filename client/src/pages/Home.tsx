@@ -8,6 +8,8 @@ import EventCalendar from "@/components/EventCalendar";
 import { useLocation } from "wouter";
 import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
 import { BUCKET_URL } from "@/lib/constants";
+import BootcampGallery from "@/components/BootcampGallery"; // Import the new component
+
 
 export default function Home() {
   const [, navigate] = useLocation();
@@ -217,6 +219,7 @@ export default function Home() {
         </section>
 
         <ToolsShowcase />
+        <BootcampGallery /> {/* Added BootcampGallery component */}
 
         {/* Schedule Section */}
         <section id="schedule" className="py-20">
