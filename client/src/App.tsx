@@ -11,6 +11,7 @@ import CustomerDashboard from "@/pages/customer/Dashboard";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminEvents from "@/pages/admin/Events";
 import AdminLayout from "@/pages/admin/Layout";
+import ImagesManagement from "@/pages/admin/Images"; // Added import for ImagesManagement
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,6 +42,13 @@ function Router() {
         {() => (
           <AdminLayout>
             <AdminEvents />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/images"> {/* Added route for ImagesManagement */}
+        {() => (
+          <AdminLayout>
+            <ImagesManagement />
           </AdminLayout>
         )}
       </Route>
