@@ -25,46 +25,34 @@ function Router() {
       <Route path="/dashboard" component={CustomerDashboard} />
       {/* Admin routes */}
       <Route path="/admin">
-        {() => (
-          <AdminLayout>
-            <AdminDashboard />
-          </AdminLayout>
-        )}
+        <AdminLayout>
+          <AdminDashboard />
+        </AdminLayout>
       </Route>
       <Route path="/admin/users">
-        {() => (
-          <AdminLayout>
-            <div>Users Management</div>
-          </AdminLayout>
-        )}
+        <AdminLayout>
+          <div>Users Management</div>
+        </AdminLayout>
       </Route>
       <Route path="/admin/events">
-        {() => (
-          <AdminLayout>
-            <AdminEvents />
-          </AdminLayout>
-        )}
+        <AdminLayout>
+          <AdminEvents />
+        </AdminLayout>
       </Route>
-      <Route path="/admin/images"> {/* Added route for ImagesManagement */}
-        {() => (
-          <AdminLayout>
-            <ImagesManagement />
-          </AdminLayout>
-        )}
+      <Route path="/admin/images">
+        <AdminLayout>
+          <ImagesManagement />
+        </AdminLayout>
       </Route>
       <Route path="/admin/payments">
-        {() => (
-          <AdminLayout>
-            <div>Payments Management</div>
-          </AdminLayout>
-        )}
+        <AdminLayout>
+          <div>Payments Management</div>
+        </AdminLayout>
       </Route>
       <Route path="/admin/settings">
-        {() => (
-          <AdminLayout>
-            <div>Admin Settings</div>
-          </AdminLayout>
-        )}
+        <AdminLayout>
+          <div>Admin Settings</div>
+        </AdminLayout>
       </Route>
       <Route component={NotFound} />
     </Switch>
