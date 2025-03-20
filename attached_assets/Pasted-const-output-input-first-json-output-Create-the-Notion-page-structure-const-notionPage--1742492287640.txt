@@ -1,0 +1,341 @@
+const output = $input.first().json.output;
+
+// Create the Notion page structure
+const notionPage = {
+  parent: {
+    database_id: "1b48c5c3f3fc80f596f5e0b330194cfb"
+  },
+  cover: {
+    type: "external",
+    external: {
+      url: output.thumbnail_url
+    }
+  },
+  properties: {
+    "Documentation Title": { title: [{ text: { content: output.Title } }] },
+    "Video ID": { rich_text: [{ text: { content: output.videoId } }] },
+    "Category": { select: { name: output.Category } },
+    "Sub-Category": { select: { name: output["Sub-Category"] } },
+    "Purpose": { rich_text: [{ text: { content: output.Purpose } }] },
+    "Time Estimate": { number: output["Time-Estimate"] },
+    "Skill Level": { select: { name: output["Skill-Level"] } },
+    "Tags": { multi_select: output.Tags.map(tag => ({ name: tag })) },
+    "Tools Used": { multi_select: output["Tools-Used"].map(tool => ({ name: tool })) },
+    "Summary": { rich_text: [{ text: { content: output.summary } }] },
+    "Use Cases": { multi_select: output.useCases.map(useCase => ({ name: useCase })) },
+    "Pain Points": { multi_select: output.painPointsAddressed.map(point => ({ name: point })) }
+  },
+  children: [
+    // Title banner for the video
+    {
+      object: "block",
+      type: "heading_1",
+      heading_1: {
+        rich_text: [{ text: { content: "Video Tutorial" } }]
+      }
+    },
+    // Description text for the video
+    {
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [{ text: { content: output.summary } }]
+      }
+    },
+    // Paragraph directing to click thumbnail
+    {
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: "👇 Video preview: Click the link below the image to watch"
+            }
+          }
+        ]
+      }
+    },
+    // Thumbnail image with prominent caption link
+    {
+      object: "block",
+      type: "image",
+      image: {
+        type: "external",
+        external: {
+          url: output.thumbnail_url
+        },
+        caption: [
+          {
+            type: "text",
+            text: {
+              content: "👉 CLICK HERE TO WATCH THE FULL VIDEO 👈",
+              link: { url: output.loomUrl }
+            }
+          }
+        ]
+      }
+    },
+    // Alternative direct link to the video
+    {
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: "Alternative link: Watch the complete tutorial here",
+              link: { url: output.loomUrl }
+            }
+          }
+        ]
+      }
+    },
+    // Spacer - using properly formatted divider
+    {
+      object: "block",
+      type: "divider",
+      divider: {}
+    },
+    // Process flow introduction with callout - green background
+    {
+      object: "block",
+      type: "callout",
+      callout: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: "Process Flow: Step-by-step guide to using Loom with Taggle"
+            }
+          }
+        ],
+        icon: {
+          type: "emoji",
+          emoji: "🎬"
+        },
+        color: "green_background"
+      }
+    },
+    // Quick overview paragraph with background
+    {
+      object: "block",
+      type: "callout", 
+      callout: {
+        rich_text: [
+          {
+            type: "text",
+            text: {
+              content: "This tutorial takes approximately " + output["Time-Estimate"] + " minutes to complete. Follow the steps below or watch the video for a visual walkthrough."
+            }
+          }
+        ],
+        icon: {
+          type: "emoji",
+          emoji: "ℹ️"
+        },
+        color: "blue_background"
+      }
+    },
+    // Process flow steps using toggle blocks with colored headers
+    ...output.processFlow.map((step, index) => {
+      // First create the step header callout with blue background
+      const stepHeader = {
+        object: "block",
+        type: "callout",
+        callout: {
+          rich_text: [
+            {
+              type: "text",
+              text: {
+                content: `Step ${index + 1}: ${step.title} (${step.duration})`
+              },
+              annotations: {
+                bold: true
+              }
+            }
+          ],
+          icon: {
+            type: "emoji",
+            emoji: getStepEmoji(index)
+          },
+          color: "blue_background"
+        }
+      };
+      
+      // Create the "Expand for details" toggle with gray background
+      const stepContent = {
+        object: "block",
+        type: "callout",
+        callout: {
+          rich_text: [
+            {
+              type: "text",
+              text: {
+                content: "Expand for details"
+              },
+              annotations: {
+                italic: true
+              }
+            }
+          ],
+          icon: {
+            type: "emoji",
+            emoji: "👇"
+          },
+          color: "gray_background",
+          children: [
+            // Toggle within the gray callout - this gives us the gray background with toggle functionality
+            {
+              object: "block",
+              type: "toggle",
+              toggle: {
+                rich_text: [
+                  {
+                    type: "text",
+                    text: {
+                      content: ""
+                    }
+                  }
+                ],
+                children: [
+                  // Actions section
+                  {
+                    object: "block",
+                    type: "heading_3",
+                    heading_3: {
+                      rich_text: [
+                        {
+                          type: "text", 
+                          text: { 
+                            content: "▶️ Actions:" 
+                          },
+                          annotations: {
+                            bold: true,
+                            color: "blue"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  ...step.actions.map(action => ({
+                    object: "block",
+                    type: "bulleted_list_item",
+                    bulleted_list_item: {
+                      rich_text: [{ text: { content: action } }]
+                    }
+                  })),
+                  // Tools section
+                  {
+                    object: "block",
+                    type: "heading_3",
+                    heading_3: {
+                      rich_text: [
+                        { 
+                          type: "text", 
+                          text: { 
+                            content: "🛠️ Tools:" 
+                          },
+                          annotations: {
+                            bold: true,
+                            color: "purple"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  ...step.tools.map(tool => ({
+                    object: "block",
+                    type: "bulleted_list_item",
+                    bulleted_list_item: {
+                      rich_text: [{ text: { content: tool } }]
+                    }
+                  })),
+                  // Pain Points section
+                  {
+                    object: "block",
+                    type: "heading_3",
+                    heading_3: {
+                      rich_text: [
+                        { 
+                          type: "text", 
+                          text: { 
+                            content: "❗ Pain Points:" 
+                          },
+                          annotations: {
+                            bold: true,
+                            color: "orange"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  ...step.painPoints.map(point => ({
+                    object: "block",
+                    type: "bulleted_list_item",
+                    bulleted_list_item: {
+                      rich_text: [{ text: { content: point } }]
+                    }
+                  })),
+                  // Outcome section
+                  {
+                    object: "block",
+                    type: "heading_3",
+                    heading_3: {
+                      rich_text: [
+                        { 
+                          type: "text", 
+                          text: { 
+                            content: "✅ Outcome:" 
+                          },
+                          annotations: {
+                            bold: true,
+                            color: "green"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    object: "block",
+                    type: "quote",
+                    quote: {
+                      rich_text: [{ text: { content: step.outcome } }]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      };
+      
+      // Add spacing between steps
+      const spacer = (index < output.processFlow.length - 1) ? {
+        object: "block",
+        type: "paragraph",
+        paragraph: {
+          rich_text: [{ text: { content: "" } }]
+        }
+      } : null;
+      
+      // Return the blocks for this step
+      return spacer ? [stepHeader, stepContent, spacer] : [stepHeader, stepContent];
+    }).flat()
+  ]
+};
+
+// Helper function to get appropriate emoji for each step
+function getStepEmoji(index) {
+  const emojis = ["🏁", "🔍", "📊", "📝", "🎥", "📋", "💡", "🎯"];
+  return emojis[index % emojis.length];
+}
+
+// Return the Notion page structure inside an output property
+return {
+  json: {
+    output: notionPage
+  }
+};
