@@ -14,6 +14,13 @@ export default function ImagesManagement() {
 
   const { data: images } = useQuery({
     queryKey: ['/api/images'],
+    queryFn: async () => {
+      const response = await fetch('/api/images');
+      if (!response.ok) {
+        throw new Error('Failed to fetch images');
+      }
+      return response.json();
+    }
   });
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
