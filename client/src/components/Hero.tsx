@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-export function Hero() {
+export default function Hero() {
   return (
     <div className="relative overflow-hidden bg-primary/5 py-16">
       <div className="absolute inset-0" style={{ opacity: 0.1 }}>
