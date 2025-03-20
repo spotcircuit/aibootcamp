@@ -2,6 +2,15 @@ import { pgTable, text, serial, numeric, timestamp, boolean } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Images table for tracking uploaded files
+export const images = pgTable("images", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull(),
+  path: text("path").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  eventId: numeric("event_id").references(() => events.id),
+});
+
 // Users table with isAdmin flag
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -63,14 +72,5 @@ export type InsertUser = z.infer<typeof userAuthSchema>;
 export type LoginUser = z.infer<typeof userLoginSchema>;
 export type User = typeof users.$inferSelect;
 export type Event = typeof events.$inferSelect;
-// Images table for tracking uploaded files
-export const images = pgTable("images", {
-  id: serial("id").primaryKey(),
-  filename: text("filename").notNull(),
-  path: text("path").notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
-  eventId: numeric("event_id").references(() => events.id),
-});
-
 export type Registration = typeof registrations.$inferSelect;
 export type Image = typeof images.$inferSelect;

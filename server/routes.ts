@@ -2,23 +2,23 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { userAuthSchema, userLoginSchema } from "@shared/schema";
+import { userAuthSchema, userLoginSchema, images } from "@shared/schema";
 import { db } from "./db";
 import { events, registrations } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import passport from 'passport';
+import fs from 'fs';
+import multer from 'multer';
+import { s3Client, BUCKET_NAME } from './s3';
+import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
 // Configure multer for file uploads
-import fs from 'fs';
-import multer from 'multer';
-import { s3Client, BUCKET_NAME } from './s3';
-import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { images } from '@shared/schema';
 const upload = multer({ dest: 'uploads/' });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       await s3Client.send(new PutObjectCommand(uploadParams));
-      
+
       // Save to database
       const [image] = await db.insert(images).values({
         filename: req.file.originalname,
@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/images/:id", async (req, res) => {
     try {
       const [image] = await db.select().from(images).where(eq(images.id, parseInt(req.params.id)));
-      
+
       if (!image) {
         return res.status(404).json({ message: "Image not found" });
       }
@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       await db.delete(images).where(eq(images.id, parseInt(req.params.id)));
-      
+
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -277,6 +277,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe-config", async (c) => {
+    return c.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
+  });
+
+  // Image routes
+  app.get("/api/images", async (c) => {
+    const allImages = await db.select().from(images);
+    return c.json(allImages);
+  });
+
+  app.post("/api/upload", async (c) => {
+    try {
+      const formData = await c.req.formData();
+      const file = formData.get("image") as any; // Type assertion needed here
+
+      if (!file) {
+        return c.json({ error: "No file provided" }, 400);
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const s3Path = `images/${file.name}`;
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: s3Path,
+        Body: buffer,
+        ContentType: file.type,
+      }));
+
+      const imageRecord = await db.insert(images).values({
+        filename: file.name,
+        path: s3Path,
+      });
+
+      return c.json({ success: true, image: imageRecord });
+    } catch (error) {
+      console.error("Upload error:", error);
+      return c.json({ error: "Upload failed" }, 500);
+    }
+  });
+
+  app.delete("/api/images/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+
+    try {
+      const image = await db.select().from(images).where(eq(images.id, id)).get();
+
+      if (!image) {
+        return c.json({ error: "Image not found" }, 404);
+      }
+
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: image.path,
+      }));
+
+      await db.delete(images).where(eq(images.id, id));
+
+      return c.json({ success: true });
+    } catch (error) {
+      console.error("Delete error:", error);
+      return c.json({ error: "Delete failed" }, 500);
     }
   });
 
