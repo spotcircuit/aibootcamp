@@ -17,7 +17,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 import fs from 'fs';
 import multer from 'multer';
 import { s3Client, BUCKET_NAME } from './s3';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { images } from '@shared/schema';
 const upload = multer({ dest: 'uploads/' });
 
@@ -65,6 +65,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const imagesList = await db.select().from(images);
       res.json(imagesList);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/images/:id", async (req, res) => {
+    try {
+      const [image] = await db.select().from(images).where(eq(images.id, parseInt(req.params.id)));
+      
+      if (!image) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: image.path,
+      }));
+
+      await db.delete(images).where(eq(images.id, parseInt(req.params.id)));
+      
+      res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
