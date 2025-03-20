@@ -25,6 +25,16 @@ export default function Hero() {
         </button>
       </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+            <span className="block">AI Basics Bootcamp</span>
+            <span className="block text-primary">Learn how to build your own AI tools in 2 hours!</span>
+          </h1>
+          <p className="mt-3 max-w-md mx-auto text-base text-muted-foreground sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Join our comprehensive bootcamp where we will build an AI Recruiter and Analyst and learn how to create our own AI Avatars.
+          </p>
+
       {/* AI Grid Background */}
       <div className="absolute inset-0 z-0" style={{ opacity: 0.1 }}>
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
