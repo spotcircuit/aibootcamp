@@ -1,4 +1,3 @@
-
 // S3 Configuration
 export const BUCKET_URL = import.meta.env.VITE_S3_BUCKET_URL;
 
