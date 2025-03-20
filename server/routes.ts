@@ -13,6 +13,10 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
+// Configure multer for file uploads
+import multer from 'multer';
+const upload = multer({ dest: 'uploads/' });
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-02-24.acacia",
 });
@@ -20,6 +24,38 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+
+  // Image upload endpoint
+  app.post('/api/upload', upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const fileStream = fs.createReadStream(req.file.path);
+      const uploadParams = {
+        Bucket: BUCKET_NAME,
+        Key: `images/uploads/${req.file.originalname}`,
+        Body: fileStream,
+        ContentType: req.file.mimetype,
+      };
+
+      await s3Client.send(new PutObjectCommand(uploadParams));
+      
+      // Save to database
+      const image = await db.insert(images).values({
+        filename: req.file.originalname,
+        path: `images/uploads/${req.file.originalname}`,
+      }).returning();
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json(image);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   app.get("/api/events", async (_req, res) => {
     try {
