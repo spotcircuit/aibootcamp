@@ -81,9 +81,9 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg bg-card">
                   <img 
-                    src={`${BUCKET_URL}/images/homepage/robots_lab.png`}
+                    src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop"
                     alt="AI Robots Lab Training" 
-                    className="w-full"
+                    className="w-full h-64 object-cover"
                   />
                   <div className="p-6">
                     <h3 className="text-xl font-semibold mb-3">Advanced AI Labs</h3>
@@ -96,9 +96,9 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="overflow-hidden rounded-lg bg-card">
                   <img 
-                    src={`${BUCKET_URL}/images/homepage/practical_training.png`}
+                    src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&auto=format&fit=crop"
                     alt="AI Robot Training Course" 
-                    className="w-full"
+                    className="w-full h-64 object-cover"
                   />
                   <div className="p-6">
                     <h3 className="text-xl font-semibold mb-3">Practical Exercises</h3>
