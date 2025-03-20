@@ -6,7 +6,7 @@ import FAQ from "@/components/FAQ";
 import ToolsShowcase from "@/components/ToolsShowcase";
 import EventCalendar from "@/components/EventCalendar";
 import { useLocation } from "wouter";
-import { Brain, Code, MessageSquare, Workflow, Lightbulb, Calendar, CheckCircle2 } from "lucide-react";
+import { Brain, CodeBracket, ChatBubbleLeftRight, ArrowsRightLeft } from "@heroicons/react/24/outline";
 import { BUCKET_URL } from "@/lib/constants";
 import BootcampGallery from "@/components/BootcampGallery"; // Import the new component
 import AIToolsShowcase from "@/components/AIToolsShowcase"; // Import the AI tools showcase component
@@ -17,22 +17,22 @@ export default function Home() {
 
   const modules = [
     {
-      icon: <Brain className="w-8 h-8 text-primary" />,
+      icon: <Brain className="w-8 h-8 text-primary" strokeWidth={1.5} />,
       title: "What is AI?",
       description: "Learn the fundamentals of artificial intelligence and its core concepts.",
     },
     {
-      icon: <MessageSquare className="w-8 h-8 text-primary" />,
+      icon: <ChatBubbleLeftRight className="w-8 h-8 text-primary" strokeWidth={1.5} />,
       title: "Tool Building",
       description: "Create your own AI-powered tools and applications.",
     },
     {
-      icon: <Code className="w-8 h-8 text-primary" />,
+      icon: <CodeBracket className="w-8 h-8 text-primary" strokeWidth={1.5} />,
       title: "Basics of Talent Intelligence",
       description: "Understand how AI is transforming recruitment and talent management.",
     },
     {
-      icon: <Workflow className="w-8 h-8 text-primary" />,
+      icon: <ArrowsRightLeft className="w-8 h-8 text-primary" strokeWidth={1.5} />,
       title: "AI's Impact on Jobs",
       description: "Explore how AI is reshaping the economy and job market.",
     },
