@@ -67,13 +67,12 @@ export default function Hero() {
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            <span className="block">Master AI Fundamentals</span>
-            <span className="block text-primary mt-2">in Just 12 Weeks</span>
+            <span className="block">AI Basics Bootcamp</span>
+            <span className="block text-primary mt-2">Learn how to build your own AI tools in 2 hours!</span>
           </h1>
 
           <p className="mt-6 max-w-2xl mx-auto text-xl text-muted-foreground">
-            Join our comprehensive bootcamp and learn the foundations of Artificial Intelligence
-            from industry experts. Perfect for beginners and intermediate learners.
+            Join our comprehensive bootcamp where we will build an AI Recruiter and Analyst and learn how to create our own AI Avatars.
           </p>
 
           <div className="mt-10 flex gap-4 justify-center">
