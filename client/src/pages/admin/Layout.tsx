@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   CreditCardIcon,
   Cog8ToothIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 
 const sidebarItems = [
