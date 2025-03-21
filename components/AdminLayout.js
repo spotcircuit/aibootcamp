@@ -9,7 +9,6 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Get session immediately
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -17,14 +16,8 @@ export default function AdminLayout({ children }) {
         return;
       }
 
-      // Quick check for admin status
-      const { data } = await supabase
-        .from('users')
-        .select('is_admin')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!data?.is_admin) {
+      // Check admin status from session metadata
+      if (!session.user.user_metadata?.is_admin) {
         router.replace('/');
         return;
       }

@@ -1,306 +1,417 @@
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import AdminLayout from '../../components/AdminLayout';
 
 export default function AdminDashboard() {
-  const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    upcomingEvents: 0,
+  const [eventFormData, setEventFormData] = useState({
+    name: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    capacity: 30,
+    price: 199
   });
+  const [userFormData, setUserFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'user'
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [registrations, setRegistrations] = useState([]);
 
   useEffect(() => {
-    // Fetch data upon component mount
-    fetchData();
+    fetchEvents();
+    fetchUsers();
   }, []);
-  
-  const fetchData = async () => {
+
+  const fetchEvents = async () => {
     try {
-      setLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('startDate', { ascending: true });
       
-      console.log('Fetching users from database...');
-      // Get users from the users table
-      const { data: userData, error: userError } = await supabase
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error) {
+      console.error('Error fetching events:', error.message);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('createdAt', { ascending: false });
       
-      if (userError) {
-        console.error('Error fetching users:', userError);
-      } else {
-        console.log('Users fetched successfully:', userData?.length || 0);
-        console.log('User data sample:', userData ? JSON.stringify(userData[0]) : 'No users');
-        setUsers(userData || []);
-      }
-      
-      // Get events - only retrieve events with dates in the future
-      const today = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
-      let eventData = [];
-      
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*, event_registrations(count)')
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .limit(5);
-        
-        if (!error) {
-          eventData = data;
-        } else {
-          console.log('Error fetching events:', error);
-          console.error('Error fetching events:', error.message);
-        }
-      } catch (eventError) {
-        console.log('Exception fetching events:', eventError);
-        console.error('Error fetching events:', eventError.message);
-      }
-      
-      // Set states with what we got (even if partial data)
-      setEvents(eventData || []);
-      setStats({
-        totalUsers: users.length,
-        upcomingEvents: eventData ? eventData.length : 0,
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error.message);
+    }
+  };
+
+  const fetchRegistrations = async (eventId) => {
+    try {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('eventId', eventId);
+
+      if (error) throw error;
+      setRegistrations(data || []);
+      setSelectedEvent(events.find(e => e.id === eventId));
+    } catch (error) {
+      console.error('Error fetching registrations:', error.message);
+    }
+  };
+
+  const handleEventSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventFormData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setEvents([...events, data]);
+      setEventFormData({
+        name: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        capacity: 30,
+        price: 199
       });
     } catch (error) {
-      console.log('General error:', error);
-      console.error('Error fetching data:', error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUserSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userFormData.email,
+        password: userFormData.password,
+        options: {
+          data: {
+            name: userFormData.name,
+            role: userFormData.role
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      const { error: dbError } = await supabase
+        .from('users')
+        .insert([{
+          name: userFormData.name,
+          email: userFormData.email,
+          role: userFormData.role
+        }]);
+
+      if (dbError) throw dbError;
+
+      fetchUsers();
+      setUserFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'user'
+      });
+    } catch (error) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      try {
-        const { error } = await supabase
-          .from('events')
-          .delete()
-          .eq('id', eventId);
-        
-        if (error) {
-          console.error('Error deleting event:', error.message);
-          alert('Failed to delete event. Please try again.');
-        } else {
-          // Remove the deleted event from state
-          setEvents(events.filter(event => event.id !== eventId));
-          alert('Event deleted successfully');
-        }
-      } catch (error) {
-        console.error('Error:', error.message);
-        alert('An unexpected error occurred');
+    if (!confirm('Are you sure? This will delete the event and all registrations.')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+      setEvents(events.filter(e => e.id !== eventId));
+      if (selectedEvent?.id === eventId) {
+        setSelectedEvent(null);
+        setRegistrations([]);
       }
+    } catch (error) {
+      console.error('Error deleting event:', error.message);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const { error } = await supabase
-          .from('users')  
-          .delete()
-          .eq('id', userId);
-        
-        if (error) {
-          console.error('Error deleting user:', error.message);
-          alert('Failed to delete user. Please try again.');
-        } else {
-          // Remove the deleted user from state
-          setUsers(users.filter(user => user.id !== userId));
-          alert('User deleted successfully');
-        }
-      } catch (error) {
-        console.error('Error:', error.message);
-        alert('An unexpected error occurred');
-      }
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    
+    try {
+      const { error: dbError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (dbError) throw dbError;
+
+      setUsers(users.filter(u => u.id !== userId));
+    } catch (error) {
+      console.error('Error deleting user:', error.message);
     }
   };
-  
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-gray-300 dark:bg-gray-700 h-12 w-12"></div>
-          <div className="flex-1 space-y-4 py-1">
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-5/6"></div>
-            </div>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout>
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Admin Dashboard</h1>
-        
-        {/* Events Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Upcoming Events</h2>
-            <Link href="/admin/events/create" className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm">
-              Create New Event
-            </Link>
-          </div>
-          
-          {events.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Event Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Registrations
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {events.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {event.title}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {new Date(event.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {event.location}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {event.event_registrations?.[0]?.count || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <Link href={`/admin/events/${event.id}`} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                            View
-                          </Link>
-                          <Link href={`/admin/events/edit/${event.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                            Edit
-                          </Link>
-                          <button 
-                            onClick={() => handleDeleteEvent(event.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md text-center">
-              <p className="text-gray-500 dark:text-gray-300">No upcoming events found.</p>
-              <Link href="/admin/events/create" className="mt-2 inline-block text-blue-600 hover:underline dark:text-blue-400">
-                Create your first event
-              </Link>
-            </div>
-          )}
-          
-          {events.length > 0 && (
-            <div className="mt-4 text-right">
-              <Link href="/admin/events" className="text-blue-600 hover:underline dark:text-blue-400">
-                View all events →
-              </Link>
-            </div>
-          )}
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold dark:text-white">Admin Dashboard</h1>
         </div>
-        
-        {/* Users Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Users</h2>
-            <Link href="/admin/users/create" className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm">
-              Create New User
-            </Link>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
           </div>
-          
-          {users.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Created Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Admin
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {user.is_admin ? 'Yes' : 'No'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <Link href={`/admin/users/${user.id}`} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                            View
-                          </Link>
-                          <Link href={`/admin/users/edit/${user.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                            Edit
-                          </Link>
-                          <button 
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            Delete
-                          </button>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Event Management Section */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold dark:text-white">Event Management</h2>
+            
+            <form onSubmit={handleEventSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Event Name</label>
+                <input
+                  type="text"
+                  required
+                  value={eventFormData.name}
+                  onChange={(e) => setEventFormData({ ...eventFormData, name: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                <textarea
+                  required
+                  value={eventFormData.description}
+                  onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  rows="3"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={eventFormData.startDate}
+                    onChange={(e) => setEventFormData({ ...eventFormData, startDate: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={eventFormData.endDate}
+                    onChange={(e) => setEventFormData({ ...eventFormData, endDate: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Capacity</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={eventFormData.capacity}
+                    onChange={(e) => setEventFormData({ ...eventFormData, capacity: parseInt(e.target.value) })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Price ($)</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={eventFormData.price}
+                    onChange={(e) => setEventFormData({ ...eventFormData, price: parseFloat(e.target.value) })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Creating Event...' : 'Create Event'}
+              </button>
+            </form>
+
+            <div className="space-y-4">
+              {events.map((event) => (
+                <div key={event.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium dark:text-white">{event.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">{event.description}</p>
+                      <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <p>Start: {new Date(event.startDate).toLocaleString()}</p>
+                        <p>End: {new Date(event.endDate).toLocaleString()}</p>
+                        <p>Capacity: {event.capacity}</p>
+                        <p>Price: ${event.price}</p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => fetchRegistrations(event.id)}
+                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        View Registrations
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="px-3 py-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedEvent?.id === event.id && (
+                    <div className="mt-4 border-t pt-4 dark:border-gray-700">
+                      <h4 className="text-md font-medium mb-2 dark:text-white">Registered Users ({registrations.length})</h4>
+                      {registrations.length > 0 ? (
+                        <div className="space-y-2">
+                          {registrations.map((reg) => (
+                            <div key={reg.id} className="text-sm text-gray-600 dark:text-gray-300">
+                              <p>{reg.name} ({reg.email})</p>
+                              <p className="text-xs text-gray-500">Experience: {reg.experience}</p>
+                            </div>
+                          ))}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      ) : (
+                        <p className="text-sm text-gray-500">No registrations yet</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md text-center">
-              <p className="text-gray-500 dark:text-gray-300">No users found.</p>
+          </div>
+
+          {/* User Management Section */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold dark:text-white">User Management</h2>
+            
+            <form onSubmit={handleUserSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                <input
+                  type="text"
+                  required
+                  value={userFormData.name}
+                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={userFormData.email}
+                  onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={userFormData.password}
+                  onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                <select
+                  value={userFormData.role}
+                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Creating User...' : 'Create User'}
+              </button>
+            </form>
+
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div key={user.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium dark:text-white">{user.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Role: {user.role}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="px-3 py-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-          
-          {users.length > 0 && (
-            <div className="mt-4 text-right">
-              <Link href="/admin/users" className="text-purple-600 hover:underline dark:text-purple-400">
-                View all users →
-              </Link>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </AdminLayout>
