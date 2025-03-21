@@ -1,0 +1,55 @@
+{
+  "name": "aibootcamp",
+  "version": "1.0.0",
+  "description": "AI Bootcamp - Learn to build AI tools in 2 hours",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.js",
+    "db:migrate:supabase": "node scripts/supabase-migrate.js",
+    "db:setup:supabase": "node scripts/supabase-direct.js",
+    "verify:supabase": "node scripts/verify-supabase.js"
+  },
+  "keywords": [
+    "ai",
+    "bootcamp",
+    "education",
+    "learning"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "@tanstack/react-query": "^5.69.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "hls.js": "^1.5.20",
+    "next": "^15.2.3",
+    "next-auth": "^4.24.5",
+    "node-fetch": "^2.7.0",
+    "pg": "^8.11.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "wouter": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/pg": "^8.11.2",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.21",
+    "css-loader": "^7.1.2",
+    "postcss": "^8.5.3",
+    "postcss-loader": "^8.1.1",
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^3.4.17"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

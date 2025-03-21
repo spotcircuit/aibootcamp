@@ -1,0 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa;
+  color: #1a1a1a;
+}
+
+a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Dark mode styles */
+.dark-mode {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.dark-mode a {
+  color: #00ffff;
+}
+
+.dark-mode h1 {
+  color: #00ffff;
+}
+
+/* Custom component styles */
+@layer components {
+  /* Navigation Component */
+  .nav-main {
+    @apply bg-blue-600 text-white sticky top-0 z-50 shadow-md;
+  }
+  
+  .nav-container {
+    @apply container mx-auto px-4;
+  }
+  
+  .nav-content {
+    @apply flex justify-between items-center h-16;
+  }
+  
+  .nav-link {
+    @apply text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 transition-colors flex items-center gap-2 whitespace-nowrap;
+  }
+  
+  .nav-link-mobile {
+    @apply text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-2;
+  }
+  
+  /* Button Components */
+  .btn {
+    @apply inline-flex items-center gap-2 font-medium rounded transition-colors;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md;
+  }
+  
+  .btn-white {
+    @apply bg-white text-blue-600 px-4 py-2 rounded hover:bg-opacity-90 flex items-center gap-1 shadow-md;
+  }
+  
+  .btn-white-mobile {
+    @apply block w-full text-center bg-white text-blue-600 px-4 py-2 rounded hover:bg-opacity-90 mt-4 flex items-center justify-center gap-1 shadow-md;
+  }
+  
+  /* Hero Component */
+  .hero-section {
+    @apply bg-gradient-to-b from-blue-800 to-blue-950 text-white py-16 md:py-24;
+  }
+  
+  .hero-content {
+    @apply container mx-auto px-4 text-center md:text-left max-w-4xl;
+  }
+  
+  .hero-title {
+    @apply text-5xl font-bold tracking-tight sm:text-7xl text-white;
+  }
+  
+  .hero-subtitle {
+    @apply text-white text-2xl font-normal mt-1;
+  }
+  
+  .hero-description {
+    @apply mt-6 text-xl text-white max-w-3xl font-medium;
+  }
+  
+  .hero-description-contrast {
+    @apply bg-white/20 backdrop-blur-sm rounded-lg p-4 text-white font-medium;
+  }
+  
+  .hero-cta {
+    @apply mt-8 flex flex-col sm:flex-row items-center gap-4;
+  }
+  
+  .hero-price {
+    @apply flex flex-col items-start;
+  }
+  
+  .price-value {
+    @apply font-bold text-2xl text-white;
+  }
+  
+  .price-text {
+    @apply text-white text-sm;
+  }
+  
+  .hero-info {
+    @apply mt-6 text-white italic;
+  }
+  
+  /* Calendar component styles */
+  .calendar-container {
+    @apply bg-white rounded-lg shadow-md p-4;
+  }
+
+  .calendar-view-btn {
+    @apply px-4 py-2 rounded-md transition-colors;
+  }
+
+  .calendar-view-btn-active {
+    @apply bg-blue-600 text-white;
+  }
+
+  .calendar-view-btn-inactive {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+
+  .event-card {
+    @apply border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer;
+  }
+
+  .event-modal {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  }
+
+  .event-modal-content {
+    @apply bg-white rounded-lg max-w-md w-full p-6 relative;
+  }
+}
+
+/* Form Fields */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-control {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.form-select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.form-text {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+/* Hero section styles */
+.hero {
+  @apply relative overflow-hidden bg-gray-100 py-16;
+}
+
+.hero-pattern {
+  @apply absolute inset-0 opacity-10;
+}
+
+.hero-content {
+  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center;
+}
+
+.hero-title {
+  @apply text-5xl font-bold tracking-tight sm:text-7xl;
+}
+
+.hero-subtitle {
+  @apply block text-blue-600 mt-2 text-2xl sm:text-3xl;
+}
+
+.hero-description {
+  @apply mt-6 text-lg leading-8 text-gray-600;
+}
+
+.hero-stats {
+  @apply mt-8 flex flex-col sm:flex-row justify-center items-center gap-6;
+}
+
+.hero-stat {
+  @apply flex items-center gap-2 text-xl;
+}
+
+.hero-stat-value {
+  @apply font-bold text-blue-600;
+}
+
+.hero-stat-label {
+  @apply text-gray-600;
+}
+
+/* Navigation styles */
+.nav {
+  @apply bg-blue-600 text-white sticky top-0 z-50 shadow-md;
+}
+
+.nav-container {
+  @apply container mx-auto px-4;
+}
+
+.nav-content {
+  @apply flex justify-between items-center h-16;
+}
+
+.nav-logo {
+  @apply flex items-center space-x-2;
+}
+
+.nav-items {
+  @apply hidden md:flex items-center space-x-6;
+}
+
+.nav-item {
+  @apply text-white/90 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap;
+}
