@@ -39,6 +39,9 @@
       ],
       "@lib/*": [
         "client/src/lib/*"
+      ],
+      "@shared/*": [
+        "shared/*"
       ]
     },
     "target": "ES2017",
