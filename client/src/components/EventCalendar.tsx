@@ -165,8 +165,7 @@ export default function EventCalendar() {
                     <TableCell>
                       <Button
                         className="border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                        size="sm"
-                        onClick={() => setSelectedEvent(event)}
+                        onClick={(e) => setSelectedEvent(event)}
                       >
                         View Details
                       </Button>
