@@ -2,7 +2,6 @@ import '../styles/globals.css';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { createContext } from 'react';
-import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 
 // Create auth context
@@ -18,7 +17,6 @@ export const ThemeContext = createContext({
 });
 
 function MyApp({ Component, pageProps }) {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -34,35 +32,22 @@ function MyApp({ Component, pageProps }) {
         
         if (error) {
           console.error('Session error:', error);
+          setUser(null);
+          setLoading(false);
           return;
         }
 
         if (session?.user) {
-          console.log('Found user:', session.user.id);
-          
-          // Check admin status
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-
-          console.log('User data:', { userData, userError });
-          
-          if (!userError && userData) {
-            // Update session with admin status
-            await supabase.auth.updateUser({
-              data: { is_admin: userData.is_admin === true }
-            });
-          }
-
+          console.log('Found user:', session.user.id, session.user.email);
           setUser(session.user);
+          console.log('User set in context:', session.user.email);
         } else {
           console.log('No user session found');
           setUser(null);
         }
       } catch (error) {
         console.error('Error in checkUser:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -72,26 +57,21 @@ function MyApp({ Component, pageProps }) {
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.id);
+      console.log('Auth state change:', event, session?.user?.id, session?.user?.email);
       
       if (session?.user) {
-        // Check admin status on auth change
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single();
-
-        console.log('User data on auth change:', { userData, userError });
-        
-        if (!userError && userData) {
-          await supabase.auth.updateUser({
-            data: { is_admin: userData.is_admin === true }
-          });
-        }
-
+        console.log('Setting user in context after auth change:', session.user.email);
         setUser(session.user);
+        
+        // If this was a sign-in event, redirect to dashboard after a short delay
+        if (event === 'SIGNED_IN' && window.location.pathname === '/login') {
+          console.log('Auto-redirecting to dashboard after sign in');
+          setTimeout(() => {
+            window.location.href = '/dashboard?via=authStateChange';
+          }, 1000);
+        }
       } else {
+        console.log('Clearing user from context');
         setUser(null);
       }
     });

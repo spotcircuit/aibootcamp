@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { withAuth } from '../lib/auth';
@@ -8,6 +7,7 @@ import { withAuth } from '../lib/auth';
 function Profile({ user }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isSetup, setIsSetup] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -33,30 +33,37 @@ function Profile({ user }) {
       return;
     }
 
+    // Check if this is initial setup from an invitation
+    if (router.query.setup === 'true') {
+      setIsSetup(true);
+      // Force showing password form for new users from invites
+      setShowPasswordForm(true);
+    }
+
     try {
       console.log("User data in Profile component:", user);
-      console.log("Profile data in user object:", user.profile);
+      console.log("Profile data in user object:", user.user_metadata);
 
       // Set data from profile if available, otherwise from user metadata
       setFormData({
-        name: user.profile?.name || user.user_metadata?.name || '',
+        name: user.user_metadata?.name || '',
         email: user.email || '',
-        phone: user.profile?.phone || user.user_metadata?.phone || '',
-        experience: user.profile?.experience_level || user.user_metadata?.experience || 'beginner',
+        phone: user.user_metadata?.phone || '',
+        experience: user.user_metadata?.experience || 'beginner',
       });
 
       console.log("Form data set:", {
-        name: user.profile?.name || user.user_metadata?.name || '',
+        name: user.user_metadata?.name || '',
         email: user.email || '',
-        phone: user.profile?.phone || user.user_metadata?.phone || '',
-        experience: user.profile?.experience_level || user.user_metadata?.experience || 'beginner',
+        phone: user.user_metadata?.phone || '',
+        experience: user.user_metadata?.experience || 'beginner',
       });
     } catch (error) {
       console.error('Error setting up profile form:', error);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, router.query.setup]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,55 +108,26 @@ function Profile({ user }) {
 
       if (updateError) throw updateError;
       
-      // Update or create user profile in the profiles table
-      let profileUpdateError;
-      
-      if (user.profile) {
-        // Update existing profile
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            name: formData.name,
-            email: formData.email, // Update email in profiles table too
-            phone: formData.phone,
-            experience_level: formData.experience,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
-          
-        profileUpdateError = error;
-      } else {
-        // Create new profile
-        const { error } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: formData.email,
-            name: formData.name,
-            phone: formData.phone,
-            experience_level: formData.experience,
-            is_admin: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-          
-        profileUpdateError = error;
-      }
-      
-      if (profileUpdateError) {
-        console.error('Error updating profile in database:', profileUpdateError);
-        // Don't throw - we want to show success even if only auth data was updated
-      }
+      // No need to insert/update a separate profiles table, as user data is already in auth.users
+      // The updateUser call above already updates the user metadata in Supabase Auth
 
       setMessage({
         type: 'success',
-        text: emailChanged ? 
-          'Profile updated successfully! Please check your email for verification.' : 
-          'Profile updated successfully!'
+        text: isSetup ? 
+          'Profile setup completed successfully!' :
+          (emailChanged ? 
+            'Profile updated successfully! Please check your email for verification.' : 
+            'Profile updated successfully!')
       });
       
-      // If email changed, we need to notify the user to check their email
-      if (emailChanged) {
+      // If initial setup, redirect to dashboard
+      if (isSetup) {
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      }
+      // If email changed, redirect to login
+      else if (emailChanged) {
         setTimeout(() => {
           router.push('/login');
         }, 3000);
@@ -281,7 +259,7 @@ function Profile({ user }) {
                   />
                   {formData.email !== user.email && (
                     <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                      You'll need to verify your new email address after saving.
+                      You&apos;ll need to verify your new email address after saving.
                     </p>
                   )}
                 </div>
@@ -375,7 +353,7 @@ function Profile({ user }) {
                     />
                     <button
                       type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
+                      className="absolute top-1/2 transform -translate-y-1/2 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
@@ -407,7 +385,7 @@ function Profile({ user }) {
                     />
                     <button
                       type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
+                      className="absolute top-1/2 transform -translate-y-1/2 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
@@ -450,4 +428,7 @@ function Profile({ user }) {
   );
 }
 
-export default withAuth(Profile);
+// Wrap the Profile component with authentication
+export default withAuth(Profile, {
+  redirectTo: '/login'
+});

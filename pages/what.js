@@ -16,7 +16,7 @@ export default function WhatPage() {
             Our mission is to make AI technology accessible to everyone, regardless of their technical background.
           </p>
           
-          <h2 className="text-2xl font-semibold mb-4">What You'll Learn</h2>
+          <h2 className="text-2xl font-semibold mb-4">What You&apos;ll Learn</h2>
           <div className="mb-6">
             <p className="mb-4">
               Our bootcamp focuses on three key areas that will give you a comprehensive understanding of AI applications:
@@ -39,8 +39,8 @@ export default function WhatPage() {
           
           <h2 className="text-2xl font-semibold mb-4">Our Approach</h2>
           <p className="mb-6">
-            Our bootcamp combines theory with hands-on practice. You'll not only learn the concepts behind AI tools 
-            but also get practical experience building real applications. By the end of the 2-hour session, you'll 
+            Our bootcamp combines theory with hands-on practice. You&apos;ll not only learn the concepts behind AI tools
+            but also get practical experience building real applications. By the end of the 2-hour session, you&apos;ll
             have created your own AI tools that you can continue to develop and use.
           </p>
           

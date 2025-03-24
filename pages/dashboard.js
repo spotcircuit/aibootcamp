@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { withAuth } from '../lib/auth';
 
 function Dashboard({ user }) {
-  const router = useRouter();
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
@@ -14,44 +12,63 @@ function Dashboard({ user }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {        
-        // Fetch user's registrations
-        fetchUserData(user.id);
+      try {
+        if (user) {
+          console.log('Dashboard: Fetching data for user', user.id);
+          // Fetch user's registrations
+          fetchUserData(user.id);
+        } else {
+          console.log('Dashboard: No user available yet');
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
         setError('Error loading data: ' + error.message);
-      } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      fetchData();
-    }
+    fetchData();
   }, [user]);
   
   const fetchUserData = async (userId) => {
     try {
-      // Fetch user's registrations
-      const { data: userRegistrations, error: regError } = await supabase
-        .from('event_registrations')
+      let userRegistrations = [];
+      
+      // Try to fetch from registrations table first
+      const { data: regsData, error: regsError } = await supabase
+        .from('registrations')
         .select(`
           *,
           events (*)
         `)
-        .eq('user_id', userId);
+        .eq('auth_user_id', userId);
       
-      if (regError) {
-        if (regError.code === '42P01') { // Table does not exist error
-          console.log('Registration table not found. Treating as no registrations.');
-          setRegistrations([]);
+      // If that fails, try event_registrations table
+      if (regsError && regsError.code === '42P01') {
+        console.log('Registrations table not found, trying event_registrations');
+        const { data: eventRegsData, error: eventRegsError } = await supabase
+          .from('event_registrations')
+          .select(`
+            *,
+            events (*)
+          `)
+          .eq('auth_user_id', userId);
+        
+        if (eventRegsError) {
+          if (eventRegsError.code === '42P01') {
+            console.log('Event registrations table not found. Treating as no registrations.');
+          } else {
+            console.error('Event registration fetch error:', eventRegsError);
+          }
         } else {
-          console.error('Registration fetch error:', regError);
-          setRegistrations([]);
+          userRegistrations = eventRegsData || [];
         }
       } else {
-        setRegistrations(userRegistrations || []);
+        userRegistrations = regsData || [];
       }
+      
+      setRegistrations(userRegistrations);
       
       // Fetch available events
       const { data: allEvents, error: eventsError } = await supabase
@@ -72,19 +89,21 @@ function Dashboard({ user }) {
       }
 
       setError(null);
+      setLoading(false);
     } catch (error) {
       console.error('Error in fetchUserData:', error);
       setError('Unable to retrieve your events information at this time.');
+      setLoading(false);
     }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -153,19 +172,55 @@ function Dashboard({ user }) {
                   {registrations.map((registration) => (
                     <div key={registration.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                       <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
-                        {registration.events?.title || 'Unknown Event'}
+                        {registration.events?.name || registration.events?.title || 'Unknown Event'}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-1">
-                        Date: {registration.events?.date ? new Date(registration.events.date).toLocaleDateString() : 'TBD'}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        Status: <span className="font-semibold">{registration.status || 'Registered'}</span>
-                      </p>
-                      <Link href={`/events/${registration.event_id}`} passHref>
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                      
+                      <div className="mb-4">
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">
+                          <span className="font-medium">Date:</span> {
+                            registration.events?.start_date || registration.events?.date
+                              ? new Date(registration.events?.start_date || registration.events?.date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })
+                              : 'TBD'
+                          }
+                        </p>
+                        
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">
+                          <span className="font-medium">Time:</span> {
+                            registration.events?.start_date
+                              ? new Date(registration.events.start_date).toLocaleTimeString('en-US', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'TBD'
+                          }
+                        </p>
+                        
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">
+                          <span className="font-medium">Location:</span> {registration.events?.location || 'Online (Zoom)'}
+                        </p>
+                        
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">
+                          <span className="font-medium">Payment:</span> {
+                            registration.amount_paid
+                              ? `$${registration.amount_paid} (Paid)`
+                              : registration.stripe_payment_id
+                                ? 'Paid'
+                                : 'Pending'
+                          }
+                        </p>
+                      </div>
+                      
+                      <div className="flex space-x-3">
+                        <Link href={`/events/${registration.event_id}`} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                           View Event
-                        </button>
-                      </Link>
+                        </Link>
+                        
+                        {/* We could add a "Cancel Registration" button here if needed in the future */}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -186,7 +241,7 @@ function Dashboard({ user }) {
                       <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">{event.description}</p>
                       
                       <div className="mt-4">
-                        <Link href={`/events/${event.id}`} className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm font-medium">
+                        <Link href={`/events/${event.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
                           View Details
                         </Link>
                       </div>
@@ -218,4 +273,7 @@ function Dashboard({ user }) {
   );
 }
 
-export default withAuth(Dashboard);
+// Wrap the Dashboard component with authentication
+export default withAuth(Dashboard, {
+  redirectTo: '/login'
+});

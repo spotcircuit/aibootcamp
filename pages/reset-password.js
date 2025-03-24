@@ -16,6 +16,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [stage, setStage] = useState(token ? 'reset' : 'request');
 
   const handleChange = (e) => {

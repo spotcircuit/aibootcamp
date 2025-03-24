@@ -25,13 +25,13 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-8">What is AI Bootcamp?</h2>
           <div className="max-w-4xl mx-auto">
             <p className="text-xl mb-6">
-              AI Bootcamp is an intensive, 2-hour live training session where you'll learn how to build practical AI tools that can transform your professional workflow. Led by industry experts, this bootcamp is designed for both beginners and seasoned professionals alike.
+              AI Bootcamp is an intensive, 2-hour live training session where you&apos;ll learn how to build practical AI tools that can transform your professional workflow. Led by industry experts, this bootcamp is designed for both beginners and seasoned professionals alike.
             </p>
             <p className="text-xl mb-6">
-              In just one session, you'll gain hands-on experience building AI agents that can automate complex tasks, analyze data, and help you make more informed decisions. Our bootcamp focuses on practical applications rather than theoretical concepts, ensuring you walk away with skills you can implement immediately.
+              In just one session, you&apos;ll gain hands-on experience building AI agents that can automate complex tasks, analyze data, and help you make more informed decisions. Our bootcamp focuses on practical applications rather than theoretical concepts, ensuring you walk away with skills you can implement immediately.
             </p>
             <p className="text-xl">
-              Whether you're in talent acquisition, marketing, operations, or any other field, our AI Bootcamp will equip you with the tools and knowledge to stay ahead in the rapidly evolving AI landscape.
+              Whether you&apos;re in talent acquisition, marketing, operations, or any other field, our AI Bootcamp will equip you with the tools and knowledge to stay ahead in the rapidly evolving AI landscape.
             </p>
           </div>
         </div>

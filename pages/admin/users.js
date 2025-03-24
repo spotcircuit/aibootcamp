@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import AdminLayout from '../../components/AdminLayout';
-import Navigation from '../../components/Navigation';
+import { withAdminAuth } from '../../lib/auth';
 
 function UsersAdmin() {
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [setupLinks, setSetupLinks] = useState({});
+  const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -19,81 +17,32 @@ function UsersAdmin() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    // Check if user is an administrator
-    const checkAdminStatus = async () => {
+    // Fetch users on component mount
+    const loadUsers = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-
-        // Query the user profile to check admin status
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        
-        if (!data || !data.is_admin) {
-          // User is not an admin, redirect to dashboard
-          router.push('/dashboard');
-          return;
-        }
-        
-        setIsAdmin(true);
         await fetchUsers();
       } catch (error) {
-        console.error('Error checking admin status:', error.message);
+        console.error('Error loading users:', error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAdminStatus();
-  }, [router]);
+    loadUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
-      // First fetch all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (profilesError) throw profilesError;
+      if (error) throw error;
       
-      // Then get all the user data from auth.users
-      // In a real app, this would require admin access to auth data
-      // This is a simplified example - in production, you'd need a secure server-side API
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) {
-        // If admin auth fails, just use the profiles (this is fallback)
-        setUsers(profiles.map(profile => ({
-          ...profile,
-          email: 'Protected', // In a real app, this would come from auth data
-          created_at: new Date().toISOString()
-        })));
-        return;
-      }
-      
-      // Combine both datasets
-      const combinedUsers = profiles.map(profile => {
-        const authUser = usersData?.users?.find(u => u.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || 'Protected',
-          created_at: authUser?.created_at || new Date().toISOString()
-        };
-      });
-      
-      setUsers(combinedUsers);
+      setUsers(users);
     } catch (error) {
       console.error('Error fetching users:', error.message);
     }
@@ -108,7 +57,7 @@ function UsersAdmin() {
       is_admin: user.is_admin || false
     });
     setFormErrors({});
-    setIsModalOpen(true);
+    setShowEditForm(true);
   };
 
   const openNewUserModal = () => {
@@ -120,11 +69,11 @@ function UsersAdmin() {
       is_admin: false
     });
     setFormErrors({});
-    setIsModalOpen(true);
+    setShowEditForm(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
+    setShowEditForm(false);
     setCurrentUser(null);
     setFormData({
       full_name: '',
@@ -146,6 +95,7 @@ function UsersAdmin() {
   const validateForm = () => {
     const errors = {};
     if (!formData.full_name) errors.full_name = 'Full name is required';
+    if (!formData.email) errors.email = 'Email is required';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -162,7 +112,7 @@ function UsersAdmin() {
       if (currentUser) {
         // Update user profile
         const { error } = await supabase
-          .from('profiles')
+          .from('users')
           .update({
             full_name: formData.full_name,
             phone: formData.phone,
@@ -171,27 +121,106 @@ function UsersAdmin() {
           .eq('id', currentUser.id);
         
         if (error) throw error;
-      } else {
-        // Create new user profile
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert({
-            full_name: formData.full_name,
-            email: formData.email,
-            phone: formData.phone,
-            is_admin: formData.is_admin
-          });
         
-        if (error) throw error;
+        // Success - close the modal
+        closeModal();
+        await fetchUsers();
+      } else {
+        // Create new user via our custom API that handles Supabase accounts
+        const response = await fetch('/api/admin/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email: formData.email,
+            name: formData.full_name,
+            phone: formData.phone || '',
+            is_admin: formData.is_admin
+          })
+        });
+        
+        const result = await response.json();
+        console.log("FULL RESPONSE FROM SERVER:", result);
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create user');
+        }
+        
+        // Also update users list with the new user
+        await fetchUsers();
       }
-      
-      closeModal();
-      await fetchUsers();
     } catch (error) {
       console.error('Error updating user:', error.message);
-      alert('Error updating user. Please try again.');
+      setFormErrors({ ...formErrors, submit: error.message });
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  const generateSetupLink = (email) => {
+    // Generate a token that will work with our setup-user implementation
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Generate the full URL using the origin (base URL) of the current page
+    const url = `${window.location.origin}/auth/setup?token=${token}&email=${encodeURIComponent(email)}`;
+    
+    // Update the setupLinks state with the new URL
+    setSetupLinks(prevLinks => ({
+      ...prevLinks,
+      [email]: url
+    }));
+    
+    // Also create a profile record with this token
+    createSetupProfile(email, token);
+  };
+
+  const handleCopySetupLink = (email) => {
+    const link = setupLinks[email];
+    if (link) {
+      navigator.clipboard.writeText(link)
+        .then(() => {
+          alert('Setup link copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Failed to copy URL:', err);
+        });
+    }
+  };
+
+  // Create a profile record with the setup token
+  const createSetupProfile = async (email, token) => {
+    try {
+      // First check if a profile exists
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email);
+      
+      if (existingProfiles && existingProfiles.length > 0) {
+        // Update existing profile with new token
+        await supabase
+          .from('profiles')
+          .update({
+            setup_token: token,
+            setup_completed: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('email', email);
+      } else {
+        // Create a new profile entry
+        await supabase
+          .from('profiles')
+          .insert({
+            email: email,
+            setup_token: token,
+            setup_completed: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      }
+      
+      console.log("Setup profile created/updated with token", token);
+    } catch (error) {
+      console.error("Failed to create/update setup profile:", error);
     }
   };
 
@@ -203,7 +232,7 @@ function UsersAdmin() {
     try {
       // Delete user profile
       const { error: profileError } = await supabase
-        .from('profiles')
+        .from('users')
         .delete()
         .eq('id', userId);
       
@@ -236,260 +265,204 @@ function UsersAdmin() {
     );
   }
 
-  if (!isAdmin) {
-    return null; // Redirecting, so don't render anything
-  }
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation />
-      <main className="flex-grow container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-            <div className="flex space-x-2">
-              <Link href="/admin" className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                Back to Admin
-              </Link>
-              <button
-                onClick={openNewUserModal}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add New User
-              </button>
-            </div>
-          </div>
-          
-          {users.length === 0 ? (
-            <div className="text-center py-8">
-              <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No users found</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new user or wait for users to register.</p>
-              <div className="mt-6">
-                <button
-                  onClick={openNewUserModal}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  New User
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Joined</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                            <span className="text-blue-600 dark:text-blue-300 font-medium">
-                              {user.full_name ? user.full_name.charAt(0).toUpperCase() : '?'}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{user.full_name || 'Unnamed User'}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">{user.phone || 'No phone'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.is_admin ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                            User
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(user.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={() => openEditModal(user)}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(user.id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* Edit User Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 overflow-y-auto z-50">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
-            </div>
-
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div 
-              className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-              role="dialog" 
-              aria-modal="true" 
-              aria-labelledby="modal-headline"
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users Management</h1>
+            <button
+              onClick={openNewUserModal}
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
             >
-              <form onSubmit={handleSubmit}>
-                <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-headline">
-                        {currentUser ? 'Edit User' : 'Add New User'}
-                      </h3>
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Full Name
-                          </label>
-                          <input
-                            type="text"
-                            name="full_name"
-                            id="full_name"
-                            value={formData.full_name}
-                            onChange={handleChange}
-                            className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                          />
-                          {formErrors.full_name && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-500">{formErrors.full_name}</p>
-                          )}
-                        </div>
-                        
-                        {currentUser ? (
-                          <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Email
-                            </label>
-                            <input
-                              type="email"
-                              name="email"
-                              id="email"
-                              value={formData.email}
-                              readOnly
-                              disabled
-                              className="mt-1 bg-gray-100 dark:bg-gray-600 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-md"
-                            />
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Email cannot be changed</p>
+              Add New User
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Admin</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created At</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Setup Link</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">{user.full_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.phone || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {user.is_admin ? 
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Yes</span> : 
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">No</span>
+                      }
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                      {setupLinks[user.email] ? (
+                        <div className="flex flex-col space-y-2">
+                          <div className="max-w-sm truncate">{setupLinks[user.email]}</div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleCopySetupLink(user.email)}
+                              className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 px-2 py-1 rounded"
+                            >
+                              Copy
+                            </button>
                           </div>
-                        ) : (
-                          <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Email
-                            </label>
-                            <input
-                              type="email"
-                              name="email"
-                              id="email"
-                              value={formData.email}
-                              onChange={handleChange}
-                              className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                            />
-                          </div>
-                        )}
-                        
-                        <div>
-                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Phone
-                          </label>
-                          <input
-                            type="text"
-                            name="phone"
-                            id="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                          />
                         </div>
-                        
-                        <div className="flex items-center">
-                          <input
-                            id="is_admin"
-                            name="is_admin"
-                            type="checkbox"
-                            checked={formData.is_admin}
-                            onChange={handleChange}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                          />
-                          <label htmlFor="is_admin" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                            Administrator
-                          </label>
-                        </div>
-                      </div>
+                      ) : (
+                        <button
+                          onClick={() => generateSetupLink(user.email)}
+                          className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 px-2 py-1 rounded"
+                        >
+                          Generate Link
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No users found. Create your first user using the &quot;Add New User&quot; button.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal for creating/editing user */}
+      {showEditForm && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeModal}></div>
+
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                  {currentUser ? 'Edit User' : 'Create New User'}
+                </h3>
+                
+                {formErrors.submit && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                    {formErrors.submit}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={currentUser}
+                      className="shadow-sm focus:ring-cyan-500 focus:border-cyan-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                    {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      id="full_name"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-cyan-500 focus:border-cyan-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                    {formErrors.full_name && <p className="mt-1 text-sm text-red-600">{formErrors.full_name}</p>}
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-cyan-500 focus:border-cyan-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_admin"
+                        name="is_admin"
+                        checked={formData.is_admin}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="is_admin" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Admin User
+                      </label>
                     </div>
                   </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    disabled={submitLoading}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    {submitLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+
+                  <div className="mt-6 sm:flex sm:flex-row-reverse">
+                    <button
+                      type="submit"
+                      disabled={submitLoading}
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-cyan-600 text-base font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                    >
+                      {submitLoading ? 'Processing...' : currentUser ? 'Update' : 'Create'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:w-auto sm:text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-export default function AdminUsersPage() {
-  return (
-    <AdminLayout>
-      <UsersAdmin />
     </AdminLayout>
   );
 }
+
+// Export the component wrapped with the admin auth HOC
+export default withAdminAuth(UsersAdmin);
