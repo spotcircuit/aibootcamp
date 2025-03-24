@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 // @ts-ignore - Toast hook import
 import { useToast } from "@/hooks/use-toast";
+import { EventClickArg } from '@fullcalendar/react';
 
 export default function EventCalendar() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
@@ -89,26 +90,15 @@ export default function EventCalendar() {
     }
   }));
 
-  // FullCalendar event types
-  type EventClickInfo = {
-    event: {
-      id: string;
-      title: string;
-      start: Date;
-      end: Date;
-      extendedProps: any;
-    };
-  };
-
   const isRegistered = (eventId: number) => {
-    return registrations?.some(reg => 
+    return registrations?.some(reg =>
       reg.eventId === eventId && reg.isPaid
     ) || false;
   };
 
   // Handle event click
-  const handleEventClick = (info: EventClickInfo) => {
-    const eventId = Number(info.event.id);
+  const handleEventClick = (arg: EventClickArg) => {
+    const eventId = Number(arg.event.id);
     const clickedEvent = events?.find(e => e.id === eventId) || null;
     setSelectedEvent(clickedEvent);
   };
@@ -151,7 +141,7 @@ export default function EventCalendar() {
               }}
               events={calendarEvents}
               height="auto"
-              eventClick={(info: EventClickInfo) => handleEventClick(info)}
+              eventClick={(arg: EventClickArg) => handleEventClick(arg)}
             />
           </CardContent>
         </Card>
