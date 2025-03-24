@@ -3,10 +3,10 @@ CREATE TABLE IF NOT EXISTS public.events (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  start_date DATE NOT NULL,
-  duration_hours NUMERIC(4, 2) NOT NULL,
-  location VARCHAR(255),
-  price DECIMAL(10, 2) NOT NULL,
+  startDate TIMESTAMP WITH TIME ZONE NOT NULL,
+  endDate TIMESTAMP WITH TIME ZONE NOT NULL,
+  capacity INTEGER DEFAULT 30,
+  price DECIMAL(10, 2) NOT NULL DEFAULT 199.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -66,9 +66,10 @@ USING (auth.uid() = id);
 CREATE POLICY "Admins can view all users"
 ON public.users FOR SELECT
 USING (
+  auth.jwt() ->> 'role' = 'admin' OR
   EXISTS (
-    SELECT 1 FROM public.users
-    WHERE users.id = auth.uid() AND users.is_admin = TRUE
+    SELECT 1 FROM auth.users
+    WHERE auth.users.id = auth.uid() AND (auth.users.raw_user_meta_data->>'is_admin')::boolean = true
   )
 );
 
@@ -103,11 +104,11 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- Add sample event data
-INSERT INTO public.events (name, description, start_date, duration_hours, location, price)
+INSERT INTO public.events (name, description, startDate, endDate, capacity, price)
 VALUES 
-('AI Bootcamp: Building AI Agents', 'Learn how to build AI agents for recruiting, analysis, and customer service in just 2 hours.', '2025-04-15', 2.0, 'Online (Zoom)', 199.00),
-('Advanced AI Techniques Workshop', 'Take your AI skills to the next level with advanced prompt engineering and agent creation.', '2025-04-22', 2.0, 'Online (Zoom)', 249.00),
-('AI for Talent Acquisition Masterclass', 'Specialized bootcamp for HR and recruiting professionals to build AI tools for talent acquisition.', '2025-05-01', 2.0, 'Online (Zoom)', 199.00);
+('AI Bootcamp: Building AI Agents', 'Learn how to build AI agents for recruiting, analysis, and customer service in just 2 hours.', '2025-04-15 00:00:00', '2025-04-15 02:00:00', 30, 199.00),
+('Advanced AI Techniques Workshop', 'Take your AI skills to the next level with advanced prompt engineering and agent creation.', '2025-04-22 00:00:00', '2025-04-22 02:00:00', 30, 249.00),
+('AI for Talent Acquisition Masterclass', 'Specialized bootcamp for HR and recruiting professionals to build AI tools for talent acquisition.', '2025-05-01 00:00:00', '2025-05-01 02:00:00', 30, 199.00);
 
 -- Add phone column to users table
 ALTER TABLE public.users 

@@ -9,11 +9,11 @@ function EmailsAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
-  const [templates, setTemplates] = useState([
+  const templates = [
     { id: 'event-reminder', name: 'Event Reminder' },
     { id: 'welcome', name: 'Welcome Message' },
     { id: 'confirmation', name: 'Registration Confirmation' },
-  ]);
+  ];
   const [selectedRecipients, setSelectedRecipients] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [customSubject, setCustomSubject] = useState('');
@@ -63,36 +63,14 @@ function EmailsAdmin() {
 
   const fetchUsers = async () => {
     try {
-      // First fetch all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
+      // Fetch all users
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (profilesError) throw profilesError;
-      
-      // Then get all the user data from auth.users to get emails
-      // Note: In a real app, this would require admin access to auth data or a server-side API
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) {
-        // If admin auth fails, just use the profiles (this is fallback)
-        setUsers(profiles.map(profile => ({
-          ...profile,
-          email: 'sample@example.com', // In a real app, this would come from auth data
-        })));
-        return;
-      }
-      
-      // Combine both datasets
-      const combinedUsers = profiles.map(profile => {
-        const authUser = usersData?.users?.find(u => u.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || 'sample@example.com',
-        };
-      });
-      
-      setUsers(combinedUsers);
+      if (error) throw error;
+      setUsers(users);
     } catch (error) {
       console.error('Error fetching users:', error.message);
     }
@@ -175,7 +153,7 @@ function EmailsAdmin() {
       console.log('Message:', customMessage);
       
       // Record this email in the database
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('email_logs')
         .insert([
           {
@@ -292,7 +270,7 @@ function EmailsAdmin() {
                               id={`user-${user.id}`}
                             />
                             <label htmlFor={`user-${user.id}`} className="ml-3 block">
-                              <span className="block text-sm font-medium text-gray-900 dark:text-white">{user.full_name || 'Unnamed User'}</span>
+                              <span className="block text-sm font-medium text-gray-900 dark:text-white">{user.user_metadata.full_name || 'Unnamed User'}</span>
                               <span className="block text-sm text-gray-500 dark:text-gray-400">{user.email}</span>
                             </label>
                           </li>

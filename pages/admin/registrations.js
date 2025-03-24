@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
@@ -24,6 +24,42 @@ function RegistrationsAdmin() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [filter, setFilter] = useState({ event: '', status: '' });
   const router = useRouter();
+
+  const fetchRegistrations = useCallback(async () => {
+    try {
+      let query = supabase
+        .from('event_registrations')
+        .select(`
+          *,
+          events (id, title, date),
+          users (id, name, email)
+        `);
+      
+      // Apply filters if set
+      if (filter.event) {
+        query = query.eq('event_id', filter.event);
+      }
+      
+      if (filter.status) {
+        query = query.eq('status', filter.status);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) {
+        if (error.code === '42P01') { // Table doesn't exist
+          console.log('Registrations table does not exist yet.');
+          setRegistrations([]);
+          return;
+        }
+        throw error;
+      }
+      
+      setRegistrations(data || []);
+    } catch (error) {
+      console.error('Error fetching registrations:', error.message);
+    }
+  }, [filter.event, filter.status]);
 
   useEffect(() => {
     // Check if user is an administrator
@@ -67,43 +103,7 @@ function RegistrationsAdmin() {
     };
 
     checkAdminStatus();
-  }, [router]);
-
-  const fetchRegistrations = async () => {
-    try {
-      let query = supabase
-        .from('event_registrations')
-        .select(`
-          *,
-          events (id, title, date),
-          profiles (id, full_name, email)
-        `);
-      
-      // Apply filters if set
-      if (filter.event) {
-        query = query.eq('event_id', filter.event);
-      }
-      
-      if (filter.status) {
-        query = query.eq('status', filter.status);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) {
-        if (error.code === '42P01') { // Table doesn't exist
-          console.log('Registrations table does not exist yet.');
-          setRegistrations([]);
-          return;
-        }
-        throw error;
-      }
-      
-      setRegistrations(data || []);
-    } catch (error) {
-      console.error('Error fetching registrations:', error.message);
-    }
-  };
+  }, [router, fetchRegistrations]);
 
   const fetchEvents = async () => {
     try {
@@ -130,8 +130,8 @@ function RegistrationsAdmin() {
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email');
+        .from('users')
+        .select('id, name, email');
       
       if (error) throw error;
       
@@ -445,8 +445,8 @@ function RegistrationsAdmin() {
                   {registrations.map(registration => (
                     <tr key={registration.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {registration.profiles?.full_name || 'Unknown User'}
-                        <div className="text-xs text-gray-500">{registration.profiles?.email}</div>
+                        {registration.users?.name || 'Unknown User'}
+                        <div className="text-xs text-gray-500">{registration.users?.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {registration.events?.title || 'Unknown Event'}
@@ -525,7 +525,7 @@ function RegistrationsAdmin() {
                   >
                     <option value="">Select User</option>
                     {users.map(user => (
-                      <option key={user.id} value={user.id}>{user.full_name} ({user.email})</option>
+                      <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
                     ))}
                   </select>
                   {formErrors.user_id && (

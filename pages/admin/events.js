@@ -7,8 +7,8 @@ export default function EventsAdmin() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    startDate: '',
-    endDate: '',
+    start_date: '',
+    end_date: '',
     capacity: 30,
     price: 199
   });
@@ -26,7 +26,7 @@ export default function EventsAdmin() {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .order('startDate', { ascending: true });
+        .order('start_date', { ascending: true });
       
       if (error) throw error;
       setEvents(data || []);
@@ -43,7 +43,7 @@ export default function EventsAdmin() {
           *,
           users:email (*)
         `)
-        .eq('eventId', eventId);
+        .eq('event_id', eventId);
 
       if (error) throw error;
       setRegistrations(data || []);
@@ -71,8 +71,8 @@ export default function EventsAdmin() {
       setFormData({
         name: '',
         description: '',
-        startDate: '',
-        endDate: '',
+        start_date: '',
+        end_date: '',
         capacity: 30,
         price: 199
       });
@@ -148,8 +148,8 @@ export default function EventsAdmin() {
                   <input
                     type="datetime-local"
                     required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
@@ -159,8 +159,8 @@ export default function EventsAdmin() {
                   <input
                     type="datetime-local"
                     required
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
@@ -211,8 +211,8 @@ export default function EventsAdmin() {
                       <h3 className="text-lg font-medium dark:text-white">{event.name}</h3>
                       <p className="text-gray-600 dark:text-gray-300">{event.description}</p>
                       <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        <p>Start: {new Date(event.startDate).toLocaleString()}</p>
-                        <p>End: {new Date(event.endDate).toLocaleString()}</p>
+                        <p>Start: {new Date(event.start_date).toLocaleString()}</p>
+                        <p>End: {new Date(event.end_date).toLocaleString()}</p>
                         <p>Capacity: {event.capacity}</p>
                         <p>Price: ${event.price}</p>
                       </div>

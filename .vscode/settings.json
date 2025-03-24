@@ -4,5 +4,6 @@
   "scss.validate": false,
   "editor.quickSuggestions": {
     "strings": true
-  }
+  },
+  "git.ignoreLimitWarning": true
 }

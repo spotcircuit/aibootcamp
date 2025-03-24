@@ -1,5 +1,4 @@
 import { updateUserProfile, getUserProfile, adminUpdateUserProfile } from '../../../lib/users';
-import { supabaseAdmin } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {

@@ -26,13 +26,13 @@ export default async function handler(req, res) {
     }
 
     // Check if user is an admin
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('is_admin')
       .eq('id', userData.user.id)
       .single();
 
-    if (profileError || !profileData || !profileData.is_admin) {
+    if (userError || !user || !user.is_admin) {
       return res.status(403).json({ error: 'Forbidden - Admin access required' });
     }
 
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
     console.log(`Message: ${message}`);
 
     // Log the email send in the database
-    const { data: logData, error: logError } = await supabase
+    const { error: logError } = await supabase
       .from('email_logs')
       .insert([
         {
