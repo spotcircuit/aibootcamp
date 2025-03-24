@@ -38,7 +38,7 @@ export default function EventCalendar() {
   });
 
   // Fetch registrations to check registration status
-  const { data: registrations } = useQuery({
+  const { data: registrations } = useQuery<{ eventId: number, isPaid: boolean }[]>({
     queryKey: ['/api/registrations'],
   });
 
