@@ -1,10 +1,10 @@
-import { BeakerIcon, ChartBarSquare, UserCircle } from "@heroicons/react/24/outline";
+import { BeakerIcon, ChartBarSquareIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 
 export default function AIToolsShowcase() {
   const tools = [
     {
       name: "The AI Recruiter",
-      icon: <UserCircle className="w-12 h-12" />,
+      icon: <UserCircleIcon className="w-12 h-12" />,
       description: "Master AI-powered recruitment and candidate evaluation",
       link: "https://chatgpt.com/g/g-btWOtmuw3-the-ai-recruiter",
       gradient: "from-blue-500/10 to-purple-500/10"
@@ -18,7 +18,7 @@ export default function AIToolsShowcase() {
     },
     {
       name: "AI Avatar Creation",
-      icon: <ChartBarSquare className="w-12 h-12" />,
+      icon: <ChartBarSquareIcon className="w-12 h-12" />,
       description: "Build and customize your own AI avatar",
       gradient: "from-orange-500/10 to-rose-500/10"
     }
