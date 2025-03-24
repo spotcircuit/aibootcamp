@@ -1,5 +1,4 @@
-
-import { Brain, ChartBarSquare, UserCircle } from "@heroicons/react/24/outline";
+import { BeakerIcon, ChartBarSquare, UserCircle } from "@heroicons/react/24/outline";
 
 export default function AIToolsShowcase() {
   const tools = [
@@ -12,7 +11,7 @@ export default function AIToolsShowcase() {
     },
     {
       name: "Talent Intelligence Agent",
-      icon: <Brain className="w-12 h-12" />,
+      icon: <BeakerIcon className="w-12 h-12" />,
       description: "Analyze talent trends and workforce insights",
       link: "https://chatgpt.com/g/g-673d259b4bfc8191b6e84577871fab96-talent-intelligence-agent",
       gradient: "from-emerald-500/10 to-cyan-500/10"
