@@ -88,13 +88,13 @@ export default function EventCalendar() {
         <h2 className="text-2xl font-bold">Event Schedule</h2>
         <div className="space-x-2">
           <Button
-            variant={view === 'calendar' ? 'default' : 'outline'}
+            className={view === 'calendar' ? '' : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'}
             onClick={() => setView('calendar')}
           >
             Calendar View
           </Button>
           <Button
-            variant={view === 'list' ? 'default' : 'outline'}
+            className={view === 'list' ? '' : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'}
             onClick={() => setView('list')}
           >
             List View
@@ -164,7 +164,7 @@ export default function EventCalendar() {
                     </TableCell>
                     <TableCell>
                       <Button
-                        variant="outline"
+                        className="border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                         size="sm"
                         onClick={() => setSelectedEvent(event)}
                       >
@@ -219,11 +219,12 @@ export default function EventCalendar() {
             {selectedEvent && (
               <div className="flex justify-end space-x-2 pt-4">
                 {isRegistered(selectedEvent.id) ? (
-                  <Button disabled variant="outline">
+                  <Button disabled className="border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                     Already Registered
                   </Button>
                 ) : (
                   <Button 
+                    className="border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                     onClick={() => {
                       registerForEvent.mutate(selectedEvent.id);
                       setSelectedEvent(null);
