@@ -32,13 +32,13 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "client/src/*"
       ],
       "@components/*": [
-        "./components/*"
+        "client/src/components/*"
       ],
       "@lib/*": [
-        "./lib/*"
+        "client/src/lib/*"
       ]
     },
     "target": "ES2017",
