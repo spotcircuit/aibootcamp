@@ -1,9 +1,7 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
+import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
+// Import directly from the shared directory path instead of using path alias
+import * as schema from "../shared/schema";
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -11,5 +9,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY must be set");
+}
+
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+
+export const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);

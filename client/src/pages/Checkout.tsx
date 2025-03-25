@@ -8,10 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldCheckIcon, CreditCardIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+const STRIPE_PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || '';
+
+if (!STRIPE_PUBLIC_KEY) {
+  console.warn('Missing required Stripe key: NEXT_PUBLIC_STRIPE_PUBLIC_KEY');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
 
 function CheckoutForm({ registrationId }: { registrationId: string }) {
   const stripe = useStripe();

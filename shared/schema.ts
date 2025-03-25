@@ -1,53 +1,51 @@
-import { pgTable, text, serial, numeric, timestamp, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Images table for tracking uploaded files
-export const images = pgTable("images", {
-  id: serial("id").primaryKey(),
-  filename: text("filename").notNull(),
-  path: text("path").notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
-  eventId: numeric("event_id").references(() => events.id),
-});
+// Define schema for User
+export interface User {
+  id: number;
+  email: string;
+  password: string;
+  name: string;
+  isAdmin: boolean;
+  createdAt: string;
+}
 
-// Users table with isAdmin flag
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name").notNull(),
-  isAdmin: boolean("is_admin").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Define schema for Event
+export interface Event {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  duration: string;
+  capacity: number;
+  price: number;
+  contact: string;
+  agenda: string;
+  inclusions?: string;
+  bonus?: string;
+  createdAt: string;
+}
 
-// Events table for bootcamp sessions
-export const events = pgTable("events", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  location: text("location").notNull(),
-  duration: text("duration").notNull(),
-  capacity: numeric("capacity").notNull(),
-  price: numeric("price").notNull(),
-  contact: text("contact").notNull(),
-  agenda: text("agenda").notNull(),
-  inclusions: text("inclusions"),
-  bonus: text("bonus"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Define schema for Registration
+export interface Registration {
+  id: number;
+  userId: number;
+  eventId: number;
+  stripePaymentId?: string;
+  emailSent: string;
+  isPaid: boolean;
+  createdAt: string;
+}
 
-// Registrations table with proper relations
-export const registrations = pgTable("registrations", {
-  id: serial("id").primaryKey(),
-  userId: serial("user_id").references(() => users.id),
-  eventId: numeric("event_id").references(() => events.id),
-  stripePaymentId: text("stripe_payment_id"),
-  emailSent: text("email_sent").default("false"),
-  isPaid: boolean("is_paid").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Define schema for Image
+export interface Image {
+  id: number;
+  filename: string;
+  path: string;
+  uploadedAt: string;
+  eventId?: number;
+}
 
 // Schema for user login
 export const userLoginSchema = z.object({
@@ -56,21 +54,12 @@ export const userLoginSchema = z.object({
 });
 
 // Schema for user registration
-export const userAuthSchema = createInsertSchema(users)
-  .pick({
-    email: true,
-    password: true,
-    name: true,
-  })
-  .extend({
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-  });
+export const userAuthSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+});
 
 // Export types
 export type InsertUser = z.infer<typeof userAuthSchema>;
 export type LoginUser = z.infer<typeof userLoginSchema>;
-export type User = typeof users.$inferSelect;
-export type Event = typeof events.$inferSelect;
-export type Registration = typeof registrations.$inferSelect;
-export type Image = typeof images.$inferSelect;

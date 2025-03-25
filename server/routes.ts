@@ -1,11 +1,12 @@
-import type { Express } from "express";
+import type { Express, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { Request } from "express";
+
+// No need to redeclare here as it's declared in auth.ts
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { userAuthSchema, userLoginSchema, images } from "@shared/schema";
-import { db } from "./db";
-import { events, registrations } from "@shared/schema";
-import { and, eq } from "drizzle-orm";
+import { userAuthSchema, userLoginSchema, Image, Event, Registration } from "../shared/schema";
+import { supabase, pool } from "./db";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import passport from 'passport';
 import fs from 'fs';
@@ -30,10 +31,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Image upload endpoint
-  app.post('/api/upload', upload.single('image'), async (req, res) => {
+  app.post('/api/upload', upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
+        res.status(400).json({ message: 'No file uploaded' });
+        return;
       }
 
       const fileStream = fs.createReadStream(req.file.path);
@@ -47,302 +49,287 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await s3Client.send(new PutObjectCommand(uploadParams));
 
       // Save to database
-      const [image] = await db.insert(images).values({
+      const { data, error } = await supabase.from('images').insert({
         filename: req.file.originalname,
         path: `images/uploads/${req.file.originalname}`,
-      }).returning();
+      });
+
+      if (error) {
+        throw error;
+      }
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
 
-      res.json(image);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  app.get("/api/images", async (_req, res) => {
-    try {
-      const imagesList = await db.select().from(images);
-      res.json(imagesList);
+      if (data) {
+        res.json(data[0]);
+      } else {
+        res.status(500).json({ message: "Failed to insert image data" });
+      }
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.delete("/api/images/:id", async (req, res) => {
+  app.get("/api/images", async (_req: Request, res: Response) => {
     try {
-      const [image] = await db.select().from(images).where(eq(images.id, parseInt(req.params.id)));
+      const { data, error } = await supabase.from('images').select();
+      if (error) {
+        throw error;
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "An error occurred" });
+    }
+  });
 
-      if (!image) {
-        return res.status(404).json({ message: "Image not found" });
+  app.delete("/api/images/:id", async (req: Request, res: Response) => {
+    try {
+      const { data, error } = await supabase.from('images').select().eq('id', parseInt(req.params.id));
+      if (error) {
+        throw error;
+      }
+
+      if (!data || !data.length) {
+        res.status(404).json({ message: "Image not found" });
+        return;
       }
 
       await s3Client.send(new DeleteObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: image.path,
+        Key: data[0].path,
       }));
 
-      await db.delete(images).where(eq(images.id, parseInt(req.params.id)));
+      const { error: deleteError } = await supabase.from('images').delete().eq('id', parseInt(req.params.id));
+      if (deleteError) {
+        throw deleteError;
+      }
 
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.get("/api/events", async (_req, res) => {
+  app.get("/api/events", async (_req: Request, res: Response) => {
     try {
-      const eventsList = await db.select().from(events).orderBy(events.startDate);
-      res.json(eventsList);
+      const { data, error } = await supabase.from('events').select().order('startDate');
+      if (error) {
+        throw error;
+      }
+      res.json(data || []);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.get("/api/registrations", isAuthenticated, async (req, res) => {
+  app.get("/api/registrations", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userRegistrations = await db
-        .select()
-        .from(registrations)
-        .where(eq(registrations.userId, req.user.id));
-
-      res.json(userRegistrations);
+      if (!req.user) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
+      const { data, error } = await supabase.from('registrations').select().eq('userId', req.user.id);
+      if (error) {
+        throw error;
+      }
+      res.json(data || []);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.post("/api/register", async (req, res) => {
+  app.post("/api/register", async (req: Request, res: Response) => {
     try {
       const data = userAuthSchema.parse(req.body);
       const user = await storage.createUser(data);
 
       // Log the user in after registration
-      req.login(user, (err) => {
+      req.login(user, (err: Error | null) => {
         if (err) {
-          return res.status(500).json({ message: "Login failed after registration" });
+          res.status(500).json({ message: "Login failed after registration" });
+          return;
         }
         res.json(user);
       });
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error.message || "Registration failed" });
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: any, info: any) => {
+  app.post("/api/login", (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate("local", (err: Error | null, user: any, info: { message?: string }) => {
       if (err) {
-        return res.status(500).json({ message: err.message });
+        res.status(500).json({ message: err.message });
+        return;
       }
       if (!user) {
-        return res.status(401).json({ message: info.message || "Invalid credentials" });
+        res.status(401).json({ message: info.message || "Invalid credentials" });
+        return;
       }
-      req.login(user, (loginErr) => {
+      req.login(user, (loginErr: Error | null) => {
         if (loginErr) {
-          return res.status(500).json({ message: loginErr.message });
+          res.status(500).json({ message: loginErr.message });
+          return;
         }
         const { password, ...userData } = user;
-        return res.json(userData);
+        res.json(userData);
       });
     })(req, res, next);
   });
 
-  app.post("/api/admin/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: any, info: any) => {
+  app.post("/api/admin/login", (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate("local", (err: Error | null, user: any, info: { message?: string }) => {
       if (err) {
-        return res.status(500).json({ message: err.message });
+        res.status(500).json({ message: err.message });
+        return;
       }
       if (!user) {
-        return res.status(401).json({ message: info.message || "Invalid credentials" });
+        res.status(401).json({ message: info.message || "Invalid credentials" });
+        return;
       }
       if (!user.isAdmin) {
-        return res.status(403).json({ message: "Access denied" });
+        res.status(403).json({ message: "Access denied" });
+        return;
       }
-      req.login(user, (loginErr) => {
+      req.login(user, (loginErr: Error | null) => {
         if (loginErr) {
-          return res.status(500).json({ message: loginErr.message });
+          res.status(500).json({ message: loginErr.message });
+          return;
         }
         const { password, ...userData } = user;
-        return res.json(userData);
+        res.json(userData);
       });
     })(req, res, next);
   });
 
-  app.post("/api/logout", isAuthenticated, (req, res) => {
+  app.post("/api/logout", isAuthenticated, (req: Request, res: Response) => {
     req.logout(() => {
       res.json({ success: true });
     });
   });
 
-  app.post("/api/register-event", isAuthenticated, async (req, res) => {
+  app.post("/api/register-event", isAuthenticated, async (req: Request, res: Response) => {
     try {
+      if (!req.user) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
+      
       const { eventId } = req.body;
-      const [event] = await db.select().from(events).where(eq(events.id, eventId));
+      const { data, error } = await supabase.from('events').select().eq('id', eventId);
+      if (error) {
+        throw error;
+      }
 
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
+      if (!data || !data.length) {
+        res.status(404).json({ message: "Event not found" });
+        return;
       }
 
       // Check if already registered
-      const [existingRegistration] = await db
-        .select()
-        .from(registrations)
-        .where(
-          and(
-            eq(registrations.userId, req.user.id),
-            eq(registrations.eventId, eventId)
-          )
-        );
+      const { data: existingRegistration, error: existingRegistrationError } = await supabase.from('registrations').select().eq('userId', req.user.id).eq('eventId', eventId);
+      if (existingRegistrationError) {
+        throw existingRegistrationError;
+      }
 
-      if (existingRegistration?.isPaid) {
-        return res.status(400).json({ message: "Already registered for this event" });
+      if (existingRegistration && existingRegistration.length && existingRegistration[0].isPaid) {
+        res.status(400).json({ message: "Already registered for this event" });
+        return;
       }
 
       // Create registration
-      const [registration] = await db
-        .insert(registrations)
-        .values({
-          userId: req.user.id,
-          eventId: eventId,
-          stripePaymentId: null,
-          emailSent: "false",
-          isPaid: false,
-        })
-        .returning();
+      const { data: registrationData, error: registrationError } = await supabase.from('registrations').insert({
+        userId: req.user.id,
+        eventId: eventId,
+        stripePaymentId: null,
+        emailSent: "false",
+        isPaid: false,
+      }).select();
+      if (registrationError) {
+        throw registrationError;
+      }
+
+      if (!registrationData || registrationData.length === 0) {
+        res.status(500).json({ message: "Failed to create registration" });
+        return;
+      }
 
       // Create Stripe payment intent
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(Number(event.price) * 100), // Convert to cents
+        amount: Math.round(Number(data[0].price) * 100), // Convert to cents
         currency: "usd",
-        metadata: { registrationId: registration.id },
+        metadata: { registrationId: registrationData[0].id },
       });
 
       res.json({
-        id: registration.id,
+        id: registrationData[0].id,
         clientSecret: paymentIntent.client_secret,
       });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.post("/api/confirm-payment", isAuthenticated, async (req, res) => {
+  app.post("/api/confirm-payment", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { registrationId, paymentIntentId } = req.body;
       await storage.updatePaymentStatus(registrationId, paymentIntentId);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.post("/api/admin/events", isAdmin, async (req, res) => {
+  app.post("/api/admin/events", isAdmin, async (req: Request, res: Response) => {
     try {
-      const [event] = await db
-        .insert(events)
-        .values({
-          name: req.body.name,
-          startDate: new Date(req.body.startDate),
-          endDate: new Date(req.body.endDate),
-          capacity: req.body.capacity,
-          price: req.body.price,
-        })
-        .returning();
-
-      res.json(event);
+      const { data, error } = await supabase.from('events').insert({
+        name: req.body.name,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        capacity: req.body.capacity,
+        price: req.body.price,
+      }).select();
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        res.json(data[0]);
+      } else {
+        res.status(500).json({ message: "Failed to create event" });
+      }
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.patch("/api/admin/events/:id", isAdmin, async (req, res) => {
+  app.patch("/api/admin/events/:id", isAdmin, async (req: Request, res: Response) => {
     try {
-      const [event] = await db
-        .update(events)
-        .set({
-          name: req.body.name,
-          startDate: new Date(req.body.startDate),
-          endDate: new Date(req.body.endDate),
-          capacity: req.body.capacity,
-          price: req.body.price,
-        })
-        .where(eq(events.id, parseInt(req.params.id)))
-        .returning();
-
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
+      const { data, error } = await supabase.from('events').update({
+        name: req.body.name,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        capacity: req.body.capacity,
+        price: req.body.price,
+      }).eq('id', parseInt(req.params.id)).select();
+      if (error) {
+        throw error;
       }
 
-      res.json(event);
+      if (!data || data.length === 0) {
+        res.status(404).json({ message: "Event not found" });
+        return;
+      }
+
+      res.json(data[0]);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || "An error occurred" });
     }
   });
 
-  app.get("/api/stripe-config", async (c) => {
-    return c.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
-  });
-
-  // Image routes
-  app.get("/api/images", async (c) => {
-    const allImages = await db.select().from(images);
-    return c.json(allImages);
-  });
-
-  app.post("/api/upload", async (c) => {
-    try {
-      const formData = await c.req.formData();
-      const file = formData.get("image") as any; // Type assertion needed here
-
-      if (!file) {
-        return c.json({ error: "No file provided" }, 400);
-      }
-
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const s3Path = `images/${file.name}`;
-
-      await s3Client.send(new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: s3Path,
-        Body: buffer,
-        ContentType: file.type,
-      }));
-
-      const imageRecord = await db.insert(images).values({
-        filename: file.name,
-        path: s3Path,
-      });
-
-      return c.json({ success: true, image: imageRecord });
-    } catch (error) {
-      console.error("Upload error:", error);
-      return c.json({ error: "Upload failed" }, 500);
-    }
-  });
-
-  app.delete("/api/images/:id", async (c) => {
-    const id = Number(c.req.param("id"));
-
-    try {
-      const image = await db.select().from(images).where(eq(images.id, id)).get();
-
-      if (!image) {
-        return c.json({ error: "Image not found" }, 404);
-      }
-
-      await s3Client.send(new DeleteObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: image.path,
-      }));
-
-      await db.delete(images).where(eq(images.id, id));
-
-      return c.json({ success: true });
-    } catch (error) {
-      console.error("Delete error:", error);
-      return c.json({ error: "Delete failed" }, 500);
-    }
+  app.get("/api/stripe-config", async (req: Request, res: Response) => {
+    res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
   });
 
 

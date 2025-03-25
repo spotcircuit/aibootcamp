@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -14,6 +14,9 @@ declare global {
       email: string;
       name: string;
       isAdmin: boolean;
+    }
+    interface Request {
+      user?: User;
     }
   }
 }
@@ -86,16 +89,18 @@ export function setupAuth(app: Express) {
   });
 }
 
-export function isAuthenticated(req: Express.Request, res: Express.Response, next: Function) {
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
-    return next();
+    next();
+    return;
   }
   res.status(401).json({ message: "Not authenticated" });
 }
 
-export function isAdmin(req: Express.Request, res: Express.Response, next: Function) {
-  if (req.isAuthenticated() && req.user.isAdmin) {
-    return next();
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated() && req.user && req.user.isAdmin) {
+    next();
+    return;
   }
   res.status(403).json({ message: "Access denied" });
 }

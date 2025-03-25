@@ -1,18 +1,27 @@
 import emailjs from '@emailjs/browser';
 
-if (!import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 
-    !import.meta.env.VITE_EMAILJS_SERVICE_ID || 
-    !import.meta.env.VITE_EMAILJS_TEMPLATE_ID) {
-  throw new Error('Missing required EmailJS configuration');
+const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '';
+const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '';
+const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || '';
+
+if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+  console.warn('Missing required EmailJS configuration');
 }
 
-emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+if (EMAILJS_PUBLIC_KEY) {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
 
 export async function sendConfirmationEmail(email: string, name: string) {
   try {
+    if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+      console.error('EmailJS not properly configured');
+      return false;
+    }
+    
     await emailjs.send(
-      import.meta.env.VITE_EMAILJS_SERVICE_ID,
-      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
       {
         to_email: email,
         to_name: name,

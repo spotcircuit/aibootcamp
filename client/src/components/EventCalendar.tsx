@@ -1,26 +1,15 @@
-// @ts-ignore - FullCalendar module type declarations
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-// @ts-ignore - FullCalendar module type declarations
 import FullCalendar from '@fullcalendar/react';
-// @ts-ignore - FullCalendar module type declarations
 import dayGridPlugin from '@fullcalendar/daygrid';
-// @ts-ignore - FullCalendar module type declarations
 import timeGridPlugin from '@fullcalendar/timegrid';
-// @ts-ignore - FullCalendar module type declarations
 import interactionPlugin from '@fullcalendar/interaction';
-// @ts-ignore - FullCalendar module type declarations
 import listPlugin from '@fullcalendar/list';
-// @ts-ignore - UI component imports
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
-// @ts-ignore - API client import
 import { apiRequest } from "@/lib/queryClient";
-// @ts-ignore - Shared schema import
 import type { Event } from "@shared/schema";
-// @ts-ignore - UI component imports
 import { Card, CardContent } from "@/components/ui/card";
-// @ts-ignore - UI table component imports
 import {
   Table,
   TableBody,
@@ -29,7 +18,6 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-// @ts-ignore - UI dialog component imports
 import {
   Dialog,
   DialogContent,
@@ -37,9 +25,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-// @ts-ignore - Toast hook import
 import { useToast } from "@/hooks/use-toast";
-import { EventClickArg } from '@fullcalendar/react';
+import { EventClickArg } from '@fullcalendar/core';
 
 export default function EventCalendar() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');

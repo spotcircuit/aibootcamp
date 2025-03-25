@@ -1,6 +1,5 @@
-import { type Registration, type User, type InsertUser, registrations, users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import { db, pool } from "./db";
+import { type Registration, type User, type InsertUser } from "@shared/schema";
+import { pool, supabase } from "./db";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -30,13 +29,33 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const { data, error } = await supabase
+      .from('users')
+      .select()
+      .eq('id', id)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching user:", error);
+      return undefined;
+    }
+    
+    return data;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    const { data, error } = await supabase
+      .from('users')
+      .select()
+      .eq('email', email)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching user by email:", error);
+      return undefined;
+    }
+    
+    return data;
   }
 
   async validateUserPassword(user: User, password: string): Promise<boolean> {
@@ -46,65 +65,98 @@ export class PostgresStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-    const [existingUser] = await db
+    // Check if user exists
+    const { data: existingUser } = await supabase
+      .from('users')
       .select()
-      .from(users)
-      .where(eq(users.email, userData.email));
+      .eq('email', userData.email)
+      .single();
 
     if (existingUser) {
       throw new Error("User with this email already exists");
     }
 
-    const [user] = await db.insert(users)
-      .values({
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
         ...userData,
         password: hashedPassword,
       })
-      .returning();
+      .select()
+      .single();
 
-    return user;
+    if (error) {
+      throw error;
+    }
+
+    return data;
   }
 
   async createRegistration(data: Registration): Promise<Registration> {
-    const [registration] = await db.insert(registrations)
-      .values(data)
-      .returning();
+    const { data: registration, error } = await supabase
+      .from('registrations')
+      .insert(data)
+      .select()
+      .single();
+      
+    if (error) {
+      throw error;
+    }
+    
     return registration;
   }
 
   async getRegistrations(): Promise<Registration[]> {
-    return await db.select().from(registrations);
+    const { data, error } = await supabase
+      .from('registrations')
+      .select();
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
   }
 
   async updatePaymentStatus(id: number, paymentId: string): Promise<Registration> {
-    const [registration] = await db
-      .update(registrations)
-      .set({ 
+    const { data, error } = await supabase
+      .from('registrations')
+      .update({ 
         stripePaymentId: paymentId,
         isPaid: true,
       })
-      .where(eq(registrations.id, id))
-      .returning();
-
-    if (!registration) {
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!data) {
       throw new Error("Registration not found");
     }
-
-    return registration;
+    
+    return data;
   }
 
   async updateEmailStatus(id: number): Promise<Registration> {
-    const [registration] = await db
-      .update(registrations)
-      .set({ emailSent: "true" })
-      .where(eq(registrations.id, id))
-      .returning();
-
-    if (!registration) {
+    const { data, error } = await supabase
+      .from('registrations')
+      .update({ emailSent: "true" })
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!data) {
       throw new Error("Registration not found");
     }
-
-    return registration;
+    
+    return data;
   }
 }
 
