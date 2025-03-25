@@ -1,5 +1,5 @@
 // pages/api/registrations/index-supabase.js
-import { supabaseAdmin } from '../../../lib/supabase';
+import { supabaseAdmin } from '../../../lib/supabase-admin';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
