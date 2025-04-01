@@ -116,7 +116,7 @@ export async function getServerSideProps(context) {
         .insert({
           event_id: eventId,
           email: customerEmail, // Assuming you have an email column
-          user_id: session.metadata?.userId || null, // Optional: if you pass userId in metadata
+          auth_user_id: session.metadata?.userId || null, // Use correct column name: auth_user_id
           stripe_session_id: session_id,
           payment_status: 'paid',
           paid_at: new Date().toISOString(),
