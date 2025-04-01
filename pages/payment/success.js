@@ -84,7 +84,7 @@ export async function getServerSideProps(context) {
 
     // 4. Try to find existing registration using stripe_session_id
     const { data: existingReg, error: fetchRegError } = await supabaseAdmin
-      .from('event_registrations') // Use your actual registration table name
+      .from('registrations') // Use 'registrations' table
       .select('*, events(*)') // Adjust select as needed
       .eq('stripe_session_id', session_id)
       .maybeSingle(); // Use maybeSingle to not error if not found
@@ -102,7 +102,7 @@ export async function getServerSideProps(context) {
       // Optional: Update paid_at if it's null, though webhook is better
       if (!existingReg.paid_at) {
          const { error: updateError } = await supabaseAdmin
-          .from('event_registrations')
+          .from('registrations')
           .update({ paid_at: new Date().toISOString(), payment_status: 'paid' })
           .eq('id', existingReg.id);
          if (updateError) console.error('Error updating existing registration paid_at:', updateError);
@@ -112,7 +112,7 @@ export async function getServerSideProps(context) {
       // 5. Registration not found, CREATE it since payment was successful
       console.log(`Registration for session ${session_id} not found, creating...`);
       const { data: newReg, error: createRegError } = await supabaseAdmin
-        .from('event_registrations')
+        .from('registrations') // Use 'registrations' table
         .insert({
           event_id: eventId,
           email: customerEmail, // Assuming you have an email column
