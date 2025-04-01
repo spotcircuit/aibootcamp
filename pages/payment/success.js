@@ -36,7 +36,8 @@ export async function getServerSideProps(context) {
   let registrationDetails = null;
   let errorMessage = null;
   let customerEmail = null;
-  let eventId = null;
+  // Get eventId from URL query parameter INSTEAD of metadata
+  let eventId = context.query.eventId;
 
   // Initialize Supabase Admin Client within the function scope
   // Ensures it uses the latest env vars and avoids module-level issues
@@ -54,14 +55,16 @@ export async function getServerSideProps(context) {
       return { props: { error: 'Payment was not successful.' } };
     }
 
-    // 2. Extract necessary data from Stripe session
-    eventId = session.metadata?.eventId;
+    // 2. Extract necessary data from Stripe session AND URL query
+    // eventId is now taken directly from context.query.eventId above
+    // eventId = session.metadata?.eventId;
     customerEmail = session.customer_details?.email;
     const amountPaid = session.amount_total;
 
+    // Check if eventId was present in the URL
     if (!eventId) {
-      console.error('Error: eventId not found in Stripe Session metadata for session:', session_id);
-      return { props: { error: 'Event ID missing from payment session.', event: null, registration: null } };
+      console.error('Error: eventId not found in URL query parameters for session:', session_id);
+      return { props: { error: 'Event ID missing from success URL.', event: null, registration: null } };
     }
 
     // 3. Fetch Event Details from Supabase using eventId
