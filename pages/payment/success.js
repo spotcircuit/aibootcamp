@@ -1,20 +1,12 @@
-import Link from 'next/link';
-import Navigation from '../../components/Navigation';
-import { createClient } from '@supabase/supabase-js'; // Import createClient
-import Stripe from 'stripe'; // Import Stripe
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js'; // Keep for admin client if needed
 
-// Initialize Stripe with the secret key (server-side only)
-// Ensure STRIPE_SECRET_KEY is set in your environment variables
+// Initialize Stripe (keep as is)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// ** IMPORTANT: Ensure these environment variables are set **
+// Initialize Supabase Admin Client (keep as is)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use Service Role Key for admin actions
-
-// REMOVED check from module scope - it will be checked within getServerSideProps if needed
-// if (!supabaseServiceKey) {
-//   console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.');
-// }
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Helper function to format dates (can remain the same)
 const formatDate = (dateString) => {
@@ -30,6 +22,30 @@ const formatDate = (dateString) => {
 
 // --- SERVER-SIDE DATA FETCHING ---
 export async function getServerSideProps(context) {
+  // 1. Create a Supabase client authenticated for the current server request
+  const supabase = createServerSupabaseClient(context); // Use the helper
+
+  // 2. Get the logged-in user's session
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error('Error fetching user session:', userError);
+    // Handle error appropriately, maybe redirect to login or show error
+    // For now, we'll proceed but might fail later if user_id is required
+  }
+
+  // If auth_user_id is NOT NULL in DB, we MUST have a user here
+  // You might want to add stricter error handling if user is null and DB requires it
+  const loggedInUserId = user?.id || null;
+  if (!loggedInUserId) { 
+      console.error('Error: No logged-in user found, but auth_user_id is required by the database.');
+      // Redirect to login or return an error prop
+      // return { redirect: { destination: '/login?error=session_expired', permanent: false } };
+      // Return error prop:
+      return { props: { error: 'Your session may have expired. Please log in and try again.', event: null, registration: null } };
+  }
+
+
   const { session_id } = context.query;
   let session;
   let eventDetails = null;
@@ -39,8 +55,7 @@ export async function getServerSideProps(context) {
   // Get eventId from URL query parameter INSTEAD of metadata
   let eventId = context.query.eventId;
 
-  // Initialize Supabase Admin Client within the function scope
-  // Ensures it uses the latest env vars and avoids module-level issues
+  // Initialize Supabase Admin Client for elevated operations
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
   if (!session_id) {
@@ -48,14 +63,14 @@ export async function getServerSideProps(context) {
   }
 
   try {
-    // 1. Retrieve the Stripe Session & Verify Payment
+    // 3. Retrieve the Stripe Session & Verify Payment (keep as is)
     session = await stripe.checkout.sessions.retrieve(session_id);
 
     if (session.payment_status !== 'paid') {
       return { props: { error: 'Payment was not successful.' } };
     }
 
-    // 2. Extract necessary data from Stripe session AND URL query
+    // 4. Extract data from Stripe/URL (keep as is)
     // eventId is now taken directly from context.query.eventId above
     // eventId = session.metadata?.eventId;
     customerEmail = session.customer_details?.email;
@@ -63,18 +78,19 @@ export async function getServerSideProps(context) {
 
     // Check if eventId was present in the URL
     if (!eventId) {
+      // ... (keep existing eventId check) ...
       console.error('Error: eventId not found in URL query parameters for session:', session_id);
       return { props: { error: 'Event ID missing from success URL.', event: null, registration: null } };
     }
 
-    // 3. Fetch Event Details from Supabase using eventId
+    // 5. Fetch Event Details (keep as is)
+    // ... (fetch event details using supabaseAdmin) ...
     const { data: eventData, error: eventError } = await supabaseAdmin
       .from('events')
       .select('*')
       .eq('id', eventId)
       .single();
-
-    if (eventError || !eventData) {
+     if (eventError || !eventData) {
       console.error(`Error fetching event ${eventId}:`, eventError);
       errorMessage = 'Could not fetch event details.';
       // Continue processing to potentially create registration if payment was successful
@@ -82,7 +98,9 @@ export async function getServerSideProps(context) {
       eventDetails = eventData;
     }
 
-    // 4. Try to find existing registration using stripe_session_id
+
+    // 6. Check for existing registration (keep as is)
+    // ... (check using supabaseAdmin and stripe_session_id) ...
     const { data: existingReg, error: fetchRegError } = await supabaseAdmin
       .from('registrations') // Use 'registrations' table
       .select('*, events(*)') // Adjust select as needed
@@ -95,7 +113,9 @@ export async function getServerSideProps(context) {
       // Don't stop here, we might still need to create it.
     }
 
+
     if (existingReg) {
+      // Registration already exists... (keep existing logic)
       // Registration already exists (perhaps created by webhook or previous attempt)
       registrationDetails = existingReg;
       console.log('Found existing registration:', existingReg.id);
@@ -108,15 +128,17 @@ export async function getServerSideProps(context) {
          if (updateError) console.error('Error updating existing registration paid_at:', updateError);
       }
 
-    } else if (eventDetails && customerEmail) {
+
+    } else if (eventDetails && customerEmail /* && loggedInUserId is checked above */) { 
+      // 7. Registration not found, CREATE it using loggedInUserId (which is confirmed non-null)
       // 5. Registration not found, CREATE it since payment was successful
-      console.log(`Registration for session ${session_id} not found, creating...`);
+      console.log(`Registration for session ${session_id} not found, creating for user ${loggedInUserId}...`);
       const { data: newReg, error: createRegError } = await supabaseAdmin
         .from('registrations') // Use 'registrations' table
         .insert({
           event_id: eventId,
           email: customerEmail, // Assuming you have an email column
-          auth_user_id: session.metadata?.userId || null, // Use correct column name: auth_user_id
+          auth_user_id: loggedInUserId, // Use the ID fetched from the user's session
           stripe_session_id: session_id,
           payment_status: 'paid',
           paid_at: new Date().toISOString(),
@@ -129,37 +151,34 @@ export async function getServerSideProps(context) {
 
       if (createRegError) {
         console.error(`Error creating registration for session ${session_id}:`, createRegError);
-        errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Failed to create registration record after payment.';
+        errorMessage = (errorMessage ? errorMessage + ' ' : '') + `Failed to create registration record after payment. DB Error: ${createRegError.message}`;
       } else {
         registrationDetails = newReg;
         console.log('Successfully created new registration:', newReg.id);
       }
     } else {
+       // Handle cases where creation isn't possible
        // Could not create registration because event or email details were missing
        if (!eventDetails) console.error('Cannot create registration: Event details missing.');
        if (!customerEmail) console.error('Cannot create registration: Customer email missing.');
-       errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Missing data needed to create registration.';
+       // loggedInUserId is already checked and handled above
+       errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to missing information (event or email).';
+
     }
 
   } catch (error) {
     console.error('Error processing payment success:', error);
     errorMessage = error.message || 'An unexpected error occurred.';
-    // Ensure sensitive details aren't passed in props if session retrieval failed early
-    if (!session) {
-       eventDetails = null;
-       registrationDetails = null;
-    }
   }
 
-  // Pass data (or errors) to the page component
+  // 8. Return props (keep as is)
+  // Return props including the fetched/created data or error
   return {
     props: {
       event: eventDetails,
       registration: registrationDetails,
       error: errorMessage,
-      // Optionally pass other useful info like email, amount
-      customerEmail: customerEmail,
-      eventId: eventId
+      customerEmail: customerEmail // Pass email for display if needed
     },
   };
 }
