@@ -1,4 +1,3 @@
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import { createClient } from '@supabase/supabase-js'; // Import createClient
@@ -203,7 +202,14 @@ export default function PaymentSuccess({ success, message, customerEmail, eventI
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Payment Successful!</h1>
-            <p className="text-gray-600 dark:text-gray-400">Thank you for your payment{customerEmail ? `, ${customerEmail}` : ''}!</p>
+            <p>
+              Thank you{customerEmail ? `, ${customerEmail},` : ''} for your payment!
+              {registration ? 
+                ` You&apos;re now registered for ${event?.name || 'the event'}.` :
+                ` Your payment for ${event?.name || 'the event'} has been confirmed.`
+              }
+               A confirmation has been sent to your email (if provided).
+             </p>
            </div>
 
           {/* Display registration details fetched server-side */}
@@ -264,7 +270,7 @@ export default function PaymentSuccess({ success, message, customerEmail, eventI
 
               <div className="text-center space-y-4">
                <p className="text-gray-600 dark:text-gray-400">
-                 We've sent a confirmation email with all the details to your registered email address (if provided during checkout).
+                 We&apos;ve sent a confirmation email with all the details to your registered email address (if provided during checkout).
                </p>
 
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
