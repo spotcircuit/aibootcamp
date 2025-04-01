@@ -11,10 +11,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use Service Role Key for admin actions
 
-if (!supabaseServiceKey) {
-  console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.');
-  // Potentially throw an error or handle appropriately in production
-}
+// REMOVED check from module scope - it will be checked within getServerSideProps if needed
+// if (!supabaseServiceKey) {
+//   console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.');
+// }
 
 // Helper function to format dates (can remain the same)
 const formatDate = (dateString) => {
