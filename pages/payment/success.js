@@ -23,21 +23,19 @@ export async function getServerSideProps(context) {
 
   if (userError) {
     console.error('Error fetching user session:', userError);
-    // Handle error appropriately, maybe redirect to login or show error
-    // For now, we'll proceed but might fail later if user_id is required
+    // Continue without user - we'll handle this case below
   }
 
   // If auth_user_id is NOT NULL in DB, we MUST have a user here
-  // You might want to add stricter error handling if user is null and DB requires it
   const loggedInUserId = user?.id || null;
-  if (!loggedInUserId) { 
-      console.error('Error: No logged-in user found, but auth_user_id is required by the database.');
-      // Redirect to login or return an error prop
-      // return { redirect: { destination: '/login?error=session_expired', permanent: false } };
-      // Return error prop:
-      return { props: { error: 'Your session may have expired. Please log in and try again.', event: null, registration: null } };
+  
+  // We'll track if we're in a no-session scenario
+  const hasUserSession = !!loggedInUserId;
+  if (!hasUserSession) { 
+    console.error('Error: No logged-in user found, but auth_user_id is required by the database.');
+    // We'll continue and let the webhook handle the registration creation
+    // Instead of returning an error immediately
   }
-
 
   const { session_id } = context.query;
   let session;
@@ -122,7 +120,7 @@ export async function getServerSideProps(context) {
       }
 
 
-    } else if (eventDetails && customerEmail /* && loggedInUserId is checked above */) { 
+    } else if (eventDetails && customerEmail && hasUserSession) { 
       // 7. Registration not found, CREATE it using loggedInUserId (which is confirmed non-null)
       // 5. Registration not found, CREATE it since payment was successful
       console.log(`Registration for session ${session_id} not found, creating for user ${loggedInUserId}...`);
@@ -151,12 +149,22 @@ export async function getServerSideProps(context) {
       }
     } else {
        // Handle cases where creation isn't possible
-       // Could not create registration because event or email details were missing
-       if (!eventDetails) console.error('Cannot create registration: Event details missing.');
-       if (!customerEmail) console.error('Cannot create registration: Customer email missing.');
-       // loggedInUserId is already checked and handled above
-       errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to missing information (event or email).';
-
+       if (!eventDetails) {
+         console.error('Cannot create registration: Event details missing.');
+         errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to missing event information.';
+       } else if (!customerEmail) {
+         console.error('Cannot create registration: Customer email missing.');
+         errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to missing email information.';
+       } else if (!hasUserSession) {
+         console.log('No user session found. The webhook will handle registration creation.');
+         // This is expected in some cases - the webhook will create the registration
+         // We'll show a special message to the user
+         errorMessage = null; // Clear any error message
+       } else {
+         // Some other unexpected case
+         console.error('Cannot create registration: Unexpected error.');
+         errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to an unexpected error.';
+       }
     }
 
   } catch (error) {
@@ -218,53 +226,107 @@ function PaymentSuccess({ event, registration, error, customerEmail }) {
         <h1 className="text-3xl font-bold mb-6 text-center">
           {error ? 'Payment Processing Issue' : 'Payment Successful!'}
         </h1>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-            <strong className="font-bold">Error:</strong>
-            <span className="block sm:inline"> {error}</span>
-            <p className="text-sm mt-2">Please contact support or <Link href="/login" className="underline">log in again</Link>.</p>
+        
+        {error ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+            <div className="text-red-600 dark:text-red-400 mb-4">
+              <p>{error}</p>
+            </div>
+            <p className="mb-4">
+              We encountered an issue while processing your payment confirmation. However, if your payment was successful, our system will still register you for the event.
+            </p>
+            <p className="mb-4">
+              Please check your email for a payment confirmation from Stripe. If you have any concerns, please contact our support team.
+            </p>
           </div>
-        )}
-
-        {!error && registration && event && (
-          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <h2 className="text-2xl font-semibold mb-4">Registration Confirmed</h2>
-            <p className="mb-2">Thank you for registering, {customerEmail || 'attendee'}!</p>
-            <p className="mb-2">You are registered for:</p>
-            <p className="font-bold text-xl mb-4">{event.title}</p>
-            {/* Use helper or ensure start_time is valid Date */}
-            <p className="mb-2"><span className="font-semibold">Date:</span> {event.start_time ? new Date(event.start_time).toLocaleDateString() : 'N/A'}</p>
-            <p className="mb-2"><span className="font-semibold">Registration ID:</span> {registration.id}</p>
-            <p className="mb-2"><span className="font-semibold">Payment Status:</span> {registration.payment_status || 'paid'}</p>
-            {registration.paid_at && (
-               <p className="mb-4"><span className="font-semibold">Payment Date:</span> {new Date(registration.paid_at).toLocaleString()}</p>
-            )}
-            <p className="text-sm text-gray-600">A confirmation email may be sent separately.</p>
+        ) : !registration && !event ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+            <div className="text-green-600 dark:text-green-400 mb-4 text-center">
+              <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <h2 className="text-2xl font-semibold">Payment Processed Successfully!</h2>
+            </div>
+            <p className="mb-4 text-center">
+              Your payment has been processed successfully. Our system is currently finalizing your registration.
+            </p>
+            <p className="mb-4 text-center">
+              You will receive a confirmation email shortly with all the details. You can also view your registrations in your dashboard once you log in.
+            </p>
+            <div className="flex justify-center mt-6">
+              <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md mr-4">
+                Log In
+              </Link>
+              <Link href="/events" className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-2 rounded-lg shadow-md">
+                Browse Events
+              </Link>
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Registration Success Content */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+              <div className="text-green-600 dark:text-green-400 mb-4 text-center">
+                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <h2 className="text-2xl font-semibold">Registration Confirmed!</h2>
+              </div>
+              
+              {event && (
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {new Date(event.start_date).toLocaleDateString()} at {new Date(event.start_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </p>
+                  {event.location && (
+                    <p className="text-gray-600 dark:text-gray-400">{event.location}</p>
+                  )}
+                </div>
+              )}
+              
+              {registration && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                  <p className="mb-2">
+                    <span className="font-semibold">Registration ID:</span> {registration.id}
+                  </p>
+                  <p className="mb-2">
+                    <span className="font-semibold">Email:</span> {registration.email || customerEmail}
+                  </p>
+                  {registration.amount_paid && (
+                    <p className="mb-2">
+                      <span className="font-semibold">Amount Paid:</span> ${registration.amount_paid}
+                    </p>
+                  )}
+                  <p className="mb-2">
+                    <span className="font-semibold">Status:</span>{' '}
+                    <span className="text-green-600 dark:text-green-400">Confirmed</span>
+                  </p>
+                </div>
+              )}
+              
+              <div className="text-center text-gray-600 dark:text-gray-400 mb-6">
+                <p>A confirmation email has been sent to {registration?.email || customerEmail}.</p>
+                <p>Please check your inbox (and spam folder) for details.</p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md mr-4">
+                Go to Dashboard
+              </Link>
+              <Link href="/events" className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-6 py-2 rounded-lg shadow-md">
+                Browse More Events
+              </Link>
+            </div>
+          </>
         )}
-
-        {/* Optional: Handle case where data is missing without explicit error */}
-        {!error && (!registration || !event) && (
-          <div className="text-center text-gray-600 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-6">
-            <p>Registration details are currently unavailable, but your payment was likely successful.</p>
-            <p>Please check your email or contact support if you have concerns.</p>
-          </div>
-        )}
-
-        <div className="text-center mt-6">
-          <Link href="/" passHref>
-             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
-              Back to Home
-            </button>
-          </Link>
-          {/* Optional: Link to user dashboard if applicable */}
-          {/* <Link href="/dashboard" passHref>
-             <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-              Go to Dashboard
-            </button>
-          </Link> */} 
-        </div>
+        
+        {/* <div className="mt-8 text-center">
+          <Link href="/dashboard" className="text-blue-600 dark:text-blue-400 hover:underline">
+            Return to Dashboard
+          </Link> 
+        </div> */}
       </div>
     </div>
   );
