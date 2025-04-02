@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
-import { signIn } from '../lib/auth';
 
 export default function Login() {
   const router = useRouter();
@@ -46,48 +45,65 @@ export default function Login() {
     checkSession();
   }, [router]);
 
+  // Safe login function that doesn't throw errors
+  const safeLogin = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      return { data, error };
+    } catch (err) {
+      console.error("Login error caught:", err);
+      return { 
+        data: null, 
+        error: { 
+          message: err.message || "Invalid login credentials",
+          status: err.status || 400
+        } 
+      };
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
-    try {
-      // Sign in with email and password
-      const { data, error } = await signIn(email, password);
+    // Use our safe login function
+    const { data, error } = await safeLogin(email, password);
+    
+    if (error) {
+      console.log('Login error:', error);
       
-      if (error) {
-        console.error('Login error details:', error);
-        setError(error.message || 'Failed to sign in. Please try again later.');
-        setLoading(false);
-        return;
-      }
+      // Map error messages to more user-friendly versions
+      const errorMessages = {
+        'Invalid login credentials': 'The email or password you entered is incorrect. Please try again.',
+        'Email not confirmed': 'Your email has not been confirmed. Please check your inbox for a confirmation email.'
+      };
       
-      if (!data?.user) {
-        setError('Login failed. Please try again or contact support if the problem persists.');
-        setLoading(false);
-        return;
-      }
-      
-      // Check if user is admin and redirect accordingly
-      if (data.user?.user_metadata?.is_admin) {
-        console.log('Admin user detected, redirecting to admin dashboard');
-        router.push('/admin');
-      } else {
-        // Regular user, redirect to dashboard
-        router.push('/dashboard');
-      }
-    } catch (err) {
-      console.error('Unexpected login error:', err);
-      
-      // Provide a user-friendly error message
-      setError('An unexpected error occurred. Please try again later.');
+      setError(errorMessages[error.message] || error.message);
       setLoading(false);
-    } finally {
-      // Ensure loading state is reset even if there's an error
-      if (loading) setLoading(false);
+      return;
     }
+    
+    if (!data?.user) {
+      setError('Login failed. Please try again or contact support if the problem persists.');
+      setLoading(false);
+      return;
+    }
+    
+    // Check if user is admin and redirect accordingly
+    if (data.user?.user_metadata?.is_admin) {
+      console.log('Admin user detected, redirecting to admin dashboard');
+      router.push('/admin');
+    } else {
+      // Regular user, redirect to dashboard
+      router.push('/dashboard');
+    }
+    
+    setLoading(false);
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -101,8 +117,11 @@ export default function Login() {
         )}
         
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            {error}
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>{error}</div>
           </div>
         )}
 

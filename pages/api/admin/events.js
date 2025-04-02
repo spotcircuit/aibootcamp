@@ -18,9 +18,13 @@ export default async function handler(req, res) {
 
     case 'POST':
       try {
+        // Explicitly extract expected fields
+        const { name, description, start_date, end_date, location, price, instructor_id } = req.body;
+        const eventData = { name, description, start_date, end_date, location, price, instructor_id: instructor_id || null }; // Ensure null if empty
+
         const { data, error } = await supabaseAdmin
           .from('events')
-          .insert(req.body)
+          .insert(eventData) // Use extracted data
           .select();
         
         if (error) throw error;
@@ -32,10 +36,17 @@ export default async function handler(req, res) {
 
     case 'PUT':
       try {
+        // Explicitly extract expected fields
+        const { id, name, description, start_date, end_date, location, price, instructor_id } = req.body;
+        if (!id) {
+          return res.status(400).json({ error: 'Event ID is required for update' });
+        }
+        const eventData = { name, description, start_date, end_date, location, price, instructor_id: instructor_id || null }; // Ensure null if empty
+
         const { data, error } = await supabaseAdmin
           .from('events')
-          .update(req.body)
-          .eq('id', req.body.id)
+          .update(eventData) // Use extracted data
+          .eq('id', id)
           .select();
         
         if (error) throw error;

@@ -7,13 +7,16 @@ export default function EventCalendar() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Fetch events from Supabase directly
+  // Fetch events and instructors from Supabase directly
   useEffect(() => {
     async function fetchEvents() {
       try {
         const { data, error } = await supabase
           .from('events')
-          .select('*')
+          .select(`
+            *,
+            instructor:instructors(*)
+          `)
           .order('start_date', { ascending: true })
           .limit(3); // Only show 3 upcoming events on the homepage
         
@@ -49,48 +52,36 @@ export default function EventCalendar() {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-8">Upcoming Events</h2>
         
-        {events.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">No upcoming events at the moment. Check back later!</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <div key={event.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{event.name}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{event.description}</p>
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="text-sm text-gray-500">
-                      <div>Date: {formatDate(event.start_date)}</div>
-                      <div>Location: {event.location || 'Online (Zoom)'}</div>
-                    </div>
-                    <div className="text-lg font-bold text-blue-600">
-                      ${event.price || 199}
-                    </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {events.map((event) => (
+            <div key={event.id} className="bg-white p-6 rounded-lg shadow flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold mb-2">{event.name}</h3>
+                <p className="text-gray-600 text-sm mb-2">
+                  {formatDate(event.start_date)}
+                </p>
+                <p className="text-gray-700 mb-4 line-clamp-3">{event.description}</p>
+                
+                {event.instructor && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-2">Instructor</h4>
+                    <p className="text-lg font-semibold text-gray-800">{event.instructor.first_name} {event.instructor.last_name}</p>
+                    <p className="text-blue-600 text-sm font-medium mb-2">{event.instructor.title}</p>
+                    <p className="text-gray-600 text-sm mb-1 italic line-clamp-2">{event.instructor.summary}</p> 
+                    <p className="text-gray-600 text-sm mt-2 line-clamp-3">{event.instructor.bio}</p>
                   </div>
-                  <Link
-                    href={`/events/${event.id}`}
-                    className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    View Details
-                  </Link>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-        
-        <div className="text-center mt-8">
-          <Link
-            href="/events"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800"
-          >
-            View All Events
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </Link>
+              
+              <div className="mt-4">
+                <Link href={`/events/${event.id}`} passHref>
+                  <span className="text-blue-600 hover:text-blue-800 font-semibold">
+                    Learn More &rarr;
+                  </span>
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

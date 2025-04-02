@@ -3,7 +3,6 @@ import Navigation from '../components/Navigation';
 import Hero from '../components/Hero';
 import FAQ from '../components/FAQ';
 import EventCalendar from '../components/EventCalendar';
-import Instructor from '../components/Instructor';
 import Tools from '../components/Tools';
 import Testimonials from '../components/Testimonials';
 
@@ -61,8 +60,6 @@ export default function Home() {
       </section>
       
       <EventCalendar />
-      
-      <Instructor />
       
       <section id="outcomes" className="py-12 bg-blue-50">
         <div className="container mx-auto px-4">

@@ -7,6 +7,7 @@ function AdminDashboard() {
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
   const [registrations, setRegistrations] = useState([]);
+  const [instructors, setInstructors] = useState([]); 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +17,13 @@ function AdminDashboard() {
     email: '',
     metadata: {}
   });
+  
+  const [isInstructorModalOpen, setIsInstructorModalOpen] = useState(false);
+  const [currentInstructor, setCurrentInstructor] = useState(null);
+  const [isEditingInstructor, setIsEditingInstructor] = useState(false);
+  const [isSubmittingInstructor, setIsSubmittingInstructor] = useState(false);
+  const [instructorError, setInstructorError] = useState(null); 
 
-  // Get users on mount
   useEffect(() => {
     const getUsers = async () => {
       try {
@@ -40,7 +46,27 @@ function AdminDashboard() {
     getUsers();
   }, []);
 
-  // Get events on mount
+  useEffect(() => {
+    const getInstructors = async () => {
+      try {
+        setIsLoading(true); 
+        const response = await fetch('/api/admin/instructors');
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to fetch instructors');
+        }
+        const data = await response.json();
+        setInstructors(data || []);
+      } catch (err) {
+        console.error('Error fetching instructors:', err);
+        setError(err.message); 
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getInstructors();
+  }, []);
+
   useEffect(() => {
     const getEvents = async () => {
       try {
@@ -63,7 +89,6 @@ function AdminDashboard() {
     getEvents();
   }, []);
 
-  // Get registrations on mount
   useEffect(() => {
     const getRegistrations = async () => {
       try {
@@ -74,6 +99,7 @@ function AdminDashboard() {
           throw new Error(error);
         }
         const data = await response.json();
+        console.log('Registration data:', data);
         setRegistrations(data || []);
       } catch (err) {
         console.error('Error fetching registrations:', err);
@@ -106,7 +132,6 @@ function AdminDashboard() {
 
       const result = await response.json();
 
-      // Update events list
       setEvents(prev => {
         const filtered = prev.filter(e => e.id !== result.id);
         return [...filtered, result].sort((a, b) => 
@@ -179,7 +204,6 @@ function AdminDashboard() {
         throw new Error(error);
       }
 
-      // Remove user from state
       setUsers(users.filter(user => user.id !== userId));
     } catch (err) {
       console.error('Error deleting user:', err);
@@ -197,7 +221,8 @@ function AdminDashboard() {
       start_date: new Date(event.start_date).toISOString().slice(0, 16),
       end_date: new Date(event.end_date).toISOString().slice(0, 16),
       location: event.location,
-      price: event.price
+      price: event.price,
+      instructor_id: event.instructor_id
     });
   };
 
@@ -231,6 +256,97 @@ function AdminDashboard() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddInstructor = () => {
+    setCurrentInstructor({ first_name: '', last_name: '', title: '', summary: '', bio: '' });
+    setIsEditingInstructor(false);
+    setInstructorError(null);
+    setIsInstructorModalOpen(true);
+  };
+
+  const handleEditInstructorClick = (instructor, e) => {
+    e.stopPropagation(); 
+    setCurrentInstructor({ 
+      instructor_id: instructor.instructor_id,
+      first_name: instructor.first_name || '', 
+      last_name: instructor.last_name || '', 
+      title: instructor.title || '', 
+      summary: instructor.summary || '', 
+      bio: instructor.bio || '' 
+    });
+    setIsEditingInstructor(true);
+    setInstructorError(null);
+    setIsInstructorModalOpen(true);
+  };
+
+  const handleCloseInstructorModal = () => {
+    setIsInstructorModalOpen(false);
+    setCurrentInstructor(null);
+    setIsEditingInstructor(false);
+    setInstructorError(null);
+    setIsSubmittingInstructor(false);
+  };
+
+  const handleInstructorInputChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentInstructor(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleInstructorSubmit = async (e) => {
+    e.preventDefault();
+    if (!currentInstructor) return;
+    setIsSubmittingInstructor(true);
+    setInstructorError(null); 
+    const method = isEditingInstructor ? 'PUT' : 'POST';
+    const url = '/api/admin/instructors';
+    const body = JSON.stringify(currentInstructor);
+
+    try {
+      const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: body });
+      if (!response.ok) {
+        let errorData = await response.json();
+        let errorMsg = errorData.error || errorData.message || `Failed to ${isEditingInstructor ? 'update' : 'create'} instructor`;
+        if (response.status === 409) { errorMsg = "Cannot delete: Instructor is assigned to one or more events."; }
+        throw new Error(errorMsg);
+      }
+      
+      const fetchResponse = await fetch('/api/admin/instructors');
+      const updatedInstructors = await fetchResponse.json();
+      setInstructors(updatedInstructors || []);
+      
+      handleCloseInstructorModal(); 
+    } catch (err) {
+      console.error(`Error ${isEditingInstructor ? 'updating' : 'creating'} instructor:`, err);
+      setInstructorError(err.message || `Failed to ${isEditingInstructor ? 'update' : 'create'} instructor`); 
+    } finally {
+      setIsSubmittingInstructor(false);
+    }
+  };
+
+  const handleDeleteInstructor = async (instructorId, e) => {
+    e.stopPropagation(); 
+    if (!window.confirm('Are you sure you want to delete this instructor? This might affect existing events.')) return;
+      
+    setInstructorError(null); 
+    setError(null); 
+
+    try {
+      const response = await fetch(`/api/admin/instructors?instructor_id=${instructorId}`, { method: 'DELETE' });
+      if (!response.ok) {
+        let errorMsg = `Failed to delete instructor. Status: ${response.status}`;
+        try {
+          let errorData = await response.json();
+          errorMsg = errorData.error || errorData.message || errorMsg;
+          if (response.status === 409) { errorMsg = "Cannot delete: Instructor is assigned to one or more events."; }
+        } catch { errorMsg = response.statusText || errorMsg; }
+        throw new Error(errorMsg);
+      }
+      setInstructors(prev => prev.filter(inst => inst.instructor_id !== instructorId));
+    } catch (err) {
+      console.error('Error deleting instructor:', err);
+      setError(err.message); 
     }
   };
 
@@ -328,6 +444,58 @@ function AdminDashboard() {
           </div>
         </div>
 
+        {/* Instructors Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Instructors</h2>
+            <button
+              onClick={handleAddInstructor} 
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Add Instructor
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-4 py-2 text-left">Name</th>
+                  <th className="px-4 py-2 text-left">Title</th>
+                  <th className="px-4 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {instructors.map(instructor => (
+                  <tr key={instructor.instructor_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2">{instructor.first_name} {instructor.last_name}</td>
+                    <td className="px-4 py-2">{instructor.title || 'N/A'}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={(e) => handleEditInstructorClick(instructor, e)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteInstructor(instructor.instructor_id, e)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {instructors.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="text-center px-4 py-4 text-gray-500">No instructors found.</td>
+                  </tr> 
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Events Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -347,38 +515,46 @@ function AdminDashboard() {
                   <th className="px-4 py-2 text-left">Name</th>
                   <th className="px-4 py-2 text-left">Date</th>
                   <th className="px-4 py-2 text-left">Price</th>
+                  <th className="px-4 py-2 text-left">Instructor</th>
                   <th className="px-4 py-2 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {events.map((event) => (
-                  <tr 
-                    key={event.id}
-                    onClick={() => handleEventClick(event)}
-                    className="cursor-pointer hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-2">{event.name}</td>
-                    <td className="px-4 py-2">{new Date(event.start_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-2">${event.price}</td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={(e) => handleEditClick(event, e)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEvent(event.id);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {events.map((event) => {
+                  // Find instructor name
+                  const instructor = instructors.find(inst => inst.instructor_id === event.instructor_id);
+                  const instructorName = instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A';
+
+                  return (
+                    <tr 
+                      key={event.id}
+                      onClick={() => handleEventClick(event)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-2">{event.name}</td>
+                      <td className="px-4 py-2">{new Date(event.start_date).toLocaleDateString()}</td>
+                      <td className="px-4 py-2">${event.price}</td>
+                      <td className="px-4 py-2">{instructorName}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={(e) => handleEditClick(event, e)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteEvent(event.id);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -392,20 +568,27 @@ function AdminDashboard() {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="px-4 py-2 text-left">Event</th>
-                  <th className="px-4 py-2 text-left">User</th>
                   <th className="px-4 py-2 text-left">Name</th>
                   <th className="px-4 py-2 text-left">Email</th>
-                  <th className="px-4 py-2 text-left">Phone</th>
+                  <th className="px-4 py-2 text-left">Payment Status</th>
+                  <th className="px-4 py-2 text-left">Amount Paid</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {registrations.map((reg) => (
                   <tr key={reg.id}>
                     <td className="px-4 py-2">{reg.event?.name || 'Unknown Event'}</td>
-                    <td className="px-4 py-2">{reg.user?.email || 'Unknown User'}</td>
                     <td className="px-4 py-2">{reg.name}</td>
                     <td className="px-4 py-2">{reg.email}</td>
-                    <td className="px-4 py-2">{reg.phone || 'N/A'}</td>
+                    <td className="px-4 py-2">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${reg.payment_status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800' : 
+                          reg.payment_status?.toLowerCase() === 'refunded' ? 'bg-red-100 text-red-800' : 
+                          'bg-yellow-100 text-yellow-800'}`}>
+                        {reg.payment_status || 'pending'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">${reg.amount_paid?.toFixed(2) || '0.00'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -561,6 +744,24 @@ function AdminDashboard() {
                   />
                 </div>
 
+                {/* Instructor Selection Dropdown */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">Instructor</label>
+                  <select
+                    value={editingEvent.instructor_id || ''} // Handle null/undefined case
+                    // Removed parseInt - value is already the UUID string or empty
+                    onChange={(e) => setEditingEvent({...editingEvent, instructor_id: e.target.value || null})}
+                    className="w-full p-2 border rounded bg-white"
+                  >
+                    <option value="">-- Select Instructor (Optional) --</option>
+                    {instructors.map(instructor => (
+                      <option key={instructor.instructor_id} value={instructor.instructor_id}>
+                        {instructor.first_name} {instructor.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
@@ -591,10 +792,85 @@ function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Instructor Add/Edit Modal */}
+        {isInstructorModalOpen && currentInstructor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="text-xl font-bold">
+                  {isEditingInstructor ? 'Edit Instructor' : 'Add New Instructor'}
+                </h3>
+                <button
+                  onClick={handleCloseInstructorModal}
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                >
+                  &times; 
+                </button>
+              </div>
+
+              <form onSubmit={handleInstructorSubmit} className="space-y-4">
+                {instructorError && (
+                  <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400 text-sm">
+                    Error: {instructorError}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" name="first_name" id="first_name" required 
+                           value={currentInstructor.first_name}
+                           onChange={handleInstructorInputChange}
+                           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                  </div>
+                  <div>
+                    <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" name="last_name" id="last_name" required 
+                           value={currentInstructor.last_name}
+                           onChange={handleInstructorInputChange}
+                           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+                  <input type="text" name="title" id="title" required 
+                         value={currentInstructor.title}
+                         onChange={handleInstructorInputChange}
+                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                </div>
+                <div>
+                  <label htmlFor="summary" className="block text-sm font-medium text-gray-700">Summary (Short)</label>
+                  <textarea name="summary" id="summary" rows="2" 
+                            value={currentInstructor.summary}
+                            onChange={handleInstructorInputChange}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div>
+                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700">Bio (Detailed)</label>
+                  <textarea name="bio" id="bio" rows="4" 
+                            value={currentInstructor.bio}
+                            onChange={handleInstructorInputChange}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button type="button" onClick={handleCloseInstructorModal} 
+                          disabled={isSubmittingInstructor}
+                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button type="submit" 
+                          disabled={isSubmittingInstructor}
+                          className={`px-4 py-2 rounded-md text-white ${isEditingInstructor ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 ${isEditingInstructor ? 'focus:ring-blue-500' : 'focus:ring-green-500'} disabled:opacity-50`}>
+                    {isSubmittingInstructor ? 'Saving...' : (isEditingInstructor ? 'Save Changes' : 'Add Instructor')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 }
 
-// Export the component wrapped with the admin auth HOC
 export default withAdminAuth(AdminDashboard);

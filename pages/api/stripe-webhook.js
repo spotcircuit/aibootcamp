@@ -5,257 +5,297 @@ import { supabase } from '../../lib/supabase';
 // Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Disable body parsing, we need the raw body for Stripe signature verification
+// Disable body parsing for this route
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
+// Determine the appropriate app URL based on environment
+const getAppUrl = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  return isDevelopment 
+    ? process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    : process.env.NEXT_PUBLIC_PRODUCTION_URL || 'https://aibootcamp.lexduo.ai';
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).end('Method Not Allowed');
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const appUrl = getAppUrl();
+  console.log(`Stripe webhook called in ${process.env.NODE_ENV} environment. Using app URL: ${appUrl}`);
+
   try {
-    // Get the raw body for Stripe signature verification
+    // Get the raw request body
     const rawBody = await buffer(req);
     const signature = req.headers['stripe-signature'];
-    
-    console.log('Received Stripe webhook with signature:', signature ? 'present' : 'missing');
-    
-    // Verify the event came from Stripe
+
+    // Verify the webhook signature
     let event;
     try {
       event = stripe.webhooks.constructEvent(
-        rawBody.toString(),
+        rawBody,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       );
-      console.log('Webhook signature verified successfully for event type:', event.type);
     } catch (err) {
-      console.error(`⚠️ Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      console.error(`⚠️ Webhook signature verification failed: ${err.message}`);
+      return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
 
-    // Handle different event types
+    console.log(`Webhook event received: ${event.type}`);
+
+    // Handle the event based on its type
     switch (event.type) {
       case 'checkout.session.completed':
-        console.log('Processing checkout.session.completed event:', event.data.object.id);
         await handleCheckoutSessionCompleted(event.data.object);
         break;
       case 'payment_intent.succeeded':
-        console.log('Processing payment_intent.succeeded event:', event.data.object.id);
         await handlePaymentIntentSucceeded(event.data.object);
         break;
       case 'payment_intent.payment_failed':
-        console.log('Processing payment_intent.payment_failed event:', event.data.object.id);
         await handlePaymentIntentFailed(event.data.object);
         break;
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    res.status(200).json({ received: true });
+    // Return a response to acknowledge receipt of the event
+    return res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Error processing Stripe webhook:', error);
-    res.status(400).send(`Webhook Error: ${error.message}`);
+    console.error(`Error handling webhook: ${error.message}`);
+    return res.status(500).json({ error: 'Error handling webhook' });
   }
 }
 
 /**
- * Handle checkout session completed event
- * @param {Object} session - Stripe checkout session object
+ * Handle a checkout.session.completed event
+ * @param {Object} session - The Stripe checkout session
  */
 async function handleCheckoutSessionCompleted(session) {
-  try {
-    console.log('=== HANDLING CHECKOUT SESSION COMPLETED ===');
-    console.log('Session ID:', session.id);
-    console.log('Payment status:', session.payment_status);
-    console.log('Customer email:', session.customer_details?.email);
-    console.log('Amount total:', session.amount_total);
-    console.log('Client reference ID:', session.client_reference_id);
-    console.log('Metadata:', JSON.stringify(session.metadata || {}));
+  console.log('Handling checkout.session.completed event');
+  console.log('Session data:', JSON.stringify(session, null, 2));
+
+  // Extract customer information from the session
+  const customerEmail = session.customer_details?.email;
+  const customerName = session.customer_details?.name;
+  
+  // Extract metadata
+  const { registrationId, eventId, userId: metadataUserId } = session.metadata || {};
+  
+  console.log(`Session metadata: registrationId=${registrationId}, eventId=${eventId}, userId=${metadataUserId || 'not provided'}`);
+  
+  // If we have a registrationId, update the existing registration
+  if (registrationId) {
+    console.log(`Looking for existing registration with ID: ${registrationId}`);
     
-    // Get the registration ID from the client_reference_id
-    let registrationId = session.client_reference_id;
+    // Check if the registration already exists
+    const { data: existingReg, error: fetchError } = await supabase
+      .from('registrations')
+      .select('*')
+      .eq('id', registrationId)
+      .single();
     
-    // For Stripe Buy Button, we might not have a registration ID yet
-    if (!registrationId) {
-      console.log('No registration ID in session, creating new registration record');
+    if (fetchError) {
+      console.error('Error fetching existing registration:', fetchError);
+    }
+    
+    if (existingReg) {
+      console.log(`Found existing registration ${registrationId}, updating with payment info`);
       
-      // Get customer information from the session
-      const customerEmail = session.customer_details?.email;
-      const customerName = session.customer_details?.name;
+      // Update the registration with payment information
+      const { error: updateError } = await supabase
+        .from('registrations')
+        .update({
+          payment_status: 'paid',
+          paid_at: new Date().toISOString(),
+          stripe_payment_id: session.payment_intent
+        })
+        .eq('id', registrationId);
       
-      if (!customerEmail) {
-        console.error('No customer email in session');
-        return;
+      if (updateError) {
+        console.error('Error updating registration:', updateError);
+        console.error('Error details:', JSON.stringify(updateError));
+        throw updateError;
       }
       
-      // Try to get event ID from various sources
-      let eventId;
+      console.log(`Successfully updated registration ${registrationId}`);
+      return;
+    } else {
+      console.log(`No existing registration found with ID ${registrationId}`);
+    }
+  }
+  
+  // If we don't have a registrationId or couldn't find the registration,
+  // create a new registration record
+  if (customerEmail && eventId) {
+    console.log(`Creating new registration for email: ${customerEmail}, event: ${eventId}`);
+    
+    // Create a new registration record
+    try {
+      // First, try to find a user with the customer's email
+      console.log(`Looking for user with email: ${customerEmail}`);
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, auth_user_id')
+        .eq('email', customerEmail)
+        .maybeSingle();
       
-      // First check client_reference_id (this is where we pass the event ID)
-      if (session.client_reference_id) {
-        eventId = session.client_reference_id;
-        console.log(`Found event ID ${eventId} in client_reference_id`);
-      }
-      // Then check metadata as fallback
-      else if (session.metadata?.event_id) {
-        eventId = session.metadata.event_id;
-        console.log(`Found event ID ${eventId} in metadata`);
+      // Get auth_user_id from user data if available
+      const auth_user_id = userData?.auth_user_id || null;
+      
+      if (userError) {
+        console.error('Error finding user by email:', userError);
+        // Continue without user ID
+      } else if (userData) {
+        console.log(`Found user with email ${customerEmail}, auth_user_id: ${auth_user_id}`);
+      } else {
+        console.log(`No user found with email ${customerEmail}`);
       }
       
-      if (!eventId) {
-        console.warn('No event ID found in session, using default event ID 1');
-        eventId = 1; // Default fallback
-      }
+      console.log('Attempting to insert registration with data:', {
+        event_id: eventId,
+        name: customerName || 'Unknown',
+        email: customerEmail,
+        auth_user_id: auth_user_id,
+        stripe_session_id: session.id,
+        stripe_payment_id: session.payment_intent,
+        amount_paid: session.amount_total / 100,
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      });
       
-      // Create a new registration record
-      try {
-        // First, try to find a user with the customer's email
-        console.log(`Looking for user with email: ${customerEmail}`);
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, auth_user_id')
-          .eq('email', customerEmail)
-          .maybeSingle();
-        
-        // Get auth_user_id from user data if available
-        const auth_user_id = userData?.auth_user_id || null;
-        
-        if (userError) {
-          console.error('Error finding user by email:', userError);
-          // Continue without user ID
-        } else if (userData) {
-          console.log(`Found user with email ${customerEmail}, auth_user_id: ${auth_user_id}`);
-        } else {
-          console.log(`No user found with email ${customerEmail}`);
-        }
-        
-        console.log('Attempting to insert registration with data:', {
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([{
           event_id: eventId,
           name: customerName || 'Unknown',
           email: customerEmail,
-          auth_user_id: auth_user_id,
+          auth_user_id: auth_user_id, // Include auth_user_id if found
           stripe_session_id: session.id,
           stripe_payment_id: session.payment_intent,
-          amount_paid: session.amount_total / 100,
+          amount_paid: session.amount_total / 100, // Convert from cents to dollars
           payment_status: 'paid',
           paid_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-        
-        const { data, error } = await supabase
-          .from('registrations')
-          .insert([{
-            event_id: eventId,
-            name: customerName || 'Unknown',
-            email: customerEmail,
-            auth_user_id: auth_user_id, // Include auth_user_id if found
-            stripe_session_id: session.id,
-            stripe_payment_id: session.payment_intent,
-            amount_paid: session.amount_total / 100, // Convert from cents to dollars
-            payment_status: 'paid',
-            paid_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
-          .select();
-        
-        if (error) {
-          console.error('Error creating registration:', error);
-          console.error('Error details:', JSON.stringify(error));
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          registrationId = data[0].id;
-          console.log(`Created new registration ${registrationId} for session ${session.id}`);
-        } else {
-          console.log('Registration insert succeeded but no data returned');
-        }
-      } catch (insertError) {
-        console.error('Exception during registration insert:', insertError);
-        console.error('Failed to create registration record');
-      }
-    } else {
-      // Update the existing registration with the payment information
-      await updateRegistration(registrationId, {
-        stripe_session_id: session.id,
-        stripe_payment_id: session.payment_intent,
-        amount_paid: session.amount_total / 100, // Convert from cents to dollars
-        payment_status: 'paid',
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+          created_at: new Date().toISOString()
+        }])
+        .select();
       
-      console.log(`Updated registration ${registrationId} for session ${session.id}`);
+      if (error) {
+        console.error('Error creating registration:', error);
+        console.error('Error details:', JSON.stringify(error));
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        registrationId = data[0].id;
+        console.log(`Created new registration ${registrationId} for session ${session.id}`);
+      } else {
+        console.log('Registration insert succeeded but no data returned');
+      }
+    } catch (insertError) {
+      console.error('Exception during registration insert:', insertError);
+      console.error('Failed to create registration record');
     }
-  } catch (error) {
-    console.error('Error handling checkout session completed:', error);
+  } else {
+    // Update the existing registration with the payment information
+    console.log('Missing customer email or event ID, cannot create registration');
   }
 }
 
 /**
- * Handle payment intent succeeded event
- * @param {Object} paymentIntent - Stripe payment intent object
+ * Handle a payment_intent.succeeded event
+ * @param {Object} paymentIntent - The Stripe payment intent
  */
 async function handlePaymentIntentSucceeded(paymentIntent) {
-  try {
-    const { metadata } = paymentIntent;
-    
-    if (!metadata || !metadata.registrationId) {
-      console.error('No registration ID in payment intent metadata');
-      return;
-    }
-
-    const registrationId = metadata.registrationId;
-    
-    // Update the registration with the payment information
-    await updateRegistration(registrationId, {
-      stripe_payment_id: paymentIntent.id,
-      amount_paid: paymentIntent.amount / 100, // Convert from cents to dollars
+  console.log('Handling payment_intent.succeeded event');
+  console.log('Payment intent data:', JSON.stringify(paymentIntent, null, 2));
+  
+  // Find the registration associated with this payment intent
+  const { data: registrations, error } = await supabase
+    .from('registrations')
+    .select('id')
+    .eq('stripe_payment_id', paymentIntent.id);
+  
+  if (error) {
+    console.error('Error finding registration by payment ID:', error);
+    return;
+  }
+  
+  if (!registrations || registrations.length === 0) {
+    console.log(`No registration found for payment intent ${paymentIntent.id}`);
+    return;
+  }
+  
+  const registrationId = registrations[0].id;
+  console.log(`Found registration ${registrationId} for payment intent ${paymentIntent.id}`);
+  
+  // Update the registration with the payment information
+  const { error: updateError } = await supabase
+    .from('registrations')
+    .update({
       payment_status: 'paid',
       paid_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
-    
-    console.log(`Payment intent ${paymentIntent.id} succeeded for registration ${registrationId}`);
-  } catch (error) {
-    console.error('Error handling payment intent succeeded:', error);
+      stripe_payment_id: paymentIntent.id
+    })
+    .eq('id', registrationId);
+  
+  if (updateError) {
+    console.error('Error updating registration:', updateError);
+    console.error('Error details:', JSON.stringify(updateError));
+    throw updateError;
   }
+  
+  console.log(`Updated registration ${registrationId} with payment information`);
 }
 
 /**
- * Handle payment intent failed event
- * @param {Object} paymentIntent - Stripe payment intent object
+ * Handle a payment_intent.payment_failed event
+ * @param {Object} paymentIntent - The Stripe payment intent
  */
 async function handlePaymentIntentFailed(paymentIntent) {
-  try {
-    const { metadata } = paymentIntent;
-    
-    if (!metadata || !metadata.registrationId) {
-      console.error('No registration ID in payment intent metadata');
-      return;
-    }
-
-    const registrationId = metadata.registrationId;
-    
-    // Update the registration with the payment failure information
-    await updateRegistration(registrationId, {
-      stripe_payment_id: paymentIntent.id,
-      payment_status: 'failed',
-      payment_error: paymentIntent.last_payment_error?.message || 'Payment failed',
-      updated_at: new Date().toISOString()
-    });
-    
-    console.log(`Payment intent ${paymentIntent.id} failed for registration ${registrationId}`);
-  } catch (error) {
-    console.error('Error handling payment intent failed:', error);
+  console.log('Handling payment_intent.payment_failed event');
+  console.log('Payment intent data:', JSON.stringify(paymentIntent, null, 2));
+  
+  // Find the registration associated with this payment intent
+  const { data: registrations, error } = await supabase
+    .from('registrations')
+    .select('id')
+    .eq('stripe_payment_id', paymentIntent.id);
+  
+  if (error) {
+    console.error('Error finding registration by payment ID:', error);
+    return;
   }
+  
+  if (!registrations || registrations.length === 0) {
+    console.log(`No registration found for payment intent ${paymentIntent.id}`);
+    return;
+  }
+  
+  const registrationId = registrations[0].id;
+  console.log(`Found registration ${registrationId} for payment intent ${paymentIntent.id}`);
+  
+  // Update the registration with the payment failure information
+  const { error: updateError } = await supabase
+    .from('registrations')
+    .update({
+      payment_status: 'failed',
+      payment_error: paymentIntent.last_payment_error?.message || 'Payment failed'
+    })
+    .eq('id', registrationId);
+  
+  if (updateError) {
+    console.error('Error updating registration:', updateError);
+    console.error('Error details:', JSON.stringify(updateError));
+    throw updateError;
+  }
+  
+  console.log(`Updated registration ${registrationId} with payment failure information`);
 }
 
 /**
@@ -263,6 +303,7 @@ async function handlePaymentIntentFailed(paymentIntent) {
  * @param {string} registrationId - The registration ID
  * @param {Object} updateData - The data to update
  */
+/* Currently unused - keeping for future use
 async function updateRegistration(registrationId, updateData) {
   try {
     console.log(`Updating registration ${registrationId} with data:`, updateData);
@@ -292,3 +333,4 @@ async function updateRegistration(registrationId, updateData) {
     throw error;
   }
 }
+*/
