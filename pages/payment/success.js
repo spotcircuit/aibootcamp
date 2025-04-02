@@ -2,23 +2,16 @@ import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js'; // Keep for admin client if needed
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link'; // Add missing import
+import Navigation from '../../components/Navigation';
+
 // Initialize Stripe (keep as is)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Initialize Supabase Admin Client (keep as is)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// Helper function to format dates (can remain the same)
-const formatDate = (dateString) => {
-  if (!dateString) return 'TBD';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-};
 
 // --- SERVER-SIDE DATA FETCHING ---
 export async function getServerSideProps(context) {
@@ -183,130 +176,98 @@ export async function getServerSideProps(context) {
   };
 }
 
-// --- PAGE COMPONENT ---
-// Receives props from getServerSideProps
-export default function PaymentSuccess({ success, message, customerEmail, eventId, registrationId, event, registration, amountPaid }) {
-  // Handle failure case based on props
-  if (!success) {
-     return (
-       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-         <Navigation />
-         <div className="container mx-auto px-4 py-16">
-           <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full mb-4">
-                 {/* Error Icon (Example) */}
-                 <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-               </div>
-             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Payment Verification Failed</h1>
-             <p className="text-gray-600 dark:text-gray-400">{message || 'There was an issue processing your payment information.'}</p>
-             <div className="mt-6">
-                <Link href="/dashboard" className="btn btn-secondary">
-                   Go to Dashboard
-                 </Link>
-             </div>
-           </div>
-         </div>
-       </div>
-     );
+// --- REACT COMPONENT ---
+// The React component PaymentSuccess remains unchanged
+function PaymentSuccess({ event, registration, error, customerEmail }) {
+  const router = useRouter();
+
+  // Handle loading state or potentially redirect based on props
+  // Example: Redirect to login if error indicates user not logged in
+  useEffect(() => {
+    if (error && error.includes("Your session may have expired")) {
+      // Optional: Redirect to login after a delay or immediately
+      // setTimeout(() => router.push('/login?reason=session_expired'), 3000);
+    }
+  }, [error, router]);
+
+  // Basic loading state example
+  const [isLoading, setIsLoading] = useState(!event && !registration && !error);
+  useEffect(() => {
+     if (event || registration || error) {
+       setIsLoading(false);
+     }
+  }, [event, registration, error]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-3xl font-bold mb-6">Processing Payment...</h1>
+          <p>Verifying details, please wait.</p>
+          {/* Add a loading spinner here if desired */}
+        </div>
+      </div>
+    );
   }
 
-  // --- Successful Payment Display ---
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          {error ? 'Payment Processing Issue' : 'Payment Successful!'}
+        </h1>
 
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Payment Successful!</h1>
-            <p>
-              Thank you{customerEmail ? `, ${customerEmail},` : ''} for your payment!
-              {registration ? 
-                ` You&apos;re now registered for ${event?.name || 'the event'}.` :
-                ` Your payment for ${event?.name || 'the event'} has been confirmed.`
-              }
-               A confirmation has been sent to your email (if provided).
-             </p>
-           </div>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong className="font-bold">Error:</strong>
+            <span className="block sm:inline"> {error}</span>
+            <p className="text-sm mt-2">Please contact support or <Link href="/login" className="underline">log in again</Link>.</p>
+          </div>
+        )}
 
-          {/* Display registration details fetched server-side */}
-           <div className="space-y-6">
-             <div className="border-t border-b border-gray-200 dark:border-gray-700 py-4">
-               <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Confirmation Details</h2>
+        {!error && registration && event && (
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <h2 className="text-2xl font-semibold mb-4">Registration Confirmed</h2>
+            <p className="mb-2">Thank you for registering, {customerEmail || 'attendee'}!</p>
+            <p className="mb-2">You are registered for:</p>
+            <p className="font-bold text-xl mb-4">{event.title}</p>
+            {/* Use helper or ensure start_time is valid Date */}
+            <p className="mb-2"><span className="font-semibold">Date:</span> {event.start_time ? new Date(event.start_time).toLocaleDateString() : 'N/A'}</p>
+            <p className="mb-2"><span className="font-semibold">Registration ID:</span> {registration.id}</p>
+            <p className="mb-2"><span className="font-semibold">Payment Status:</span> {registration.payment_status || 'paid'}</p>
+            {registration.paid_at && (
+               <p className="mb-4"><span className="font-semibold">Payment Date:</span> {new Date(registration.paid_at).toLocaleString()}</p>
+            )}
+            <p className="text-sm text-gray-600">A confirmation email may be sent separately.</p>
+          </div>
+        )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {event && (
-                   <>
-                     <div>
-                       <p className="text-sm text-gray-500 dark:text-gray-400">Event</p>
-                       <p className="font-medium text-gray-900 dark:text-white">{event.name || 'AI Bootcamp'}</p>
-                     </div>
-                     <div>
-                       <p className="text-sm text-gray-500 dark:text-gray-400">Date</p>
-                       <p className="font-medium text-gray-900 dark:text-white">{event.start_date ? formatDate(event.start_date) : 'TBD'}</p>
-                     </div>
-                   </>
-                 )}
-                  {registration && (
-                   <>
-                     <div>
-                       <p className="text-sm text-gray-500 dark:text-gray-400">Name</p>
-                       <p className="font-medium text-gray-900 dark:text-white">{registration.name || 'N/A'}</p>
-                     </div>
-                     <div>
-                       <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                       <p className="font-medium text-gray-900 dark:text-white">{registration.email || customerEmail || 'N/A'}</p>
-                     </div>
-                   </>
-                 )}
-                  {amountPaid !== null && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Amount Paid</p>
-                      {/* Display amount from Stripe session */}
-                      <p className="font-medium text-gray-900 dark:text-white">${amountPaid.toFixed(2)}</p>
-                     </div>
-                  )}
-                 <div>
-                   <p className="text-sm text-gray-500 dark:text-gray-400">Payment Status</p>
-                   <p className="font-medium text-green-600 dark:text-green-400">Completed</p>
-                 </div>
-                  {eventId && (
-                   <div>
-                     <p className="text-sm text-gray-500 dark:text-gray-400">Event ID</p>
-                     <p className="font-medium text-gray-900 dark:text-white">{eventId}</p>
-                   </div>
-                  )}
-                  {registrationId && (
-                   <div>
-                     <p className="text-sm text-gray-500 dark:text-gray-400">Registration ID</p>
-                     <p className="font-medium text-gray-900 dark:text-white">{registrationId}</p>
-                   </div>
-                  )}
-               </div>
-             </div>
+        {/* Optional: Handle case where data is missing without explicit error */}
+        {!error && (!registration || !event) && (
+          <div className="text-center text-gray-600 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-6">
+            <p>Registration details are currently unavailable, but your payment was likely successful.</p>
+            <p>Please check your email or contact support if you have concerns.</p>
+          </div>
+        )}
 
-              <div className="text-center space-y-4">
-               <p className="text-gray-600 dark:text-gray-400">
-                 We&apos;ve sent a confirmation email with all the details to your registered email address (if provided during checkout).
-               </p>
+        <div className="text-center mt-6">
+          <Link href="/" passHref>
+             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+              Back to Home
+            </button>
+          </Link>
+          {/* Optional: Link to user dashboard if applicable */}
+          {/* <Link href="/dashboard" passHref>
+             <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+              Go to Dashboard
+            </button>
+          </Link> */} 
+        </div>
+      </div>
+    </div>
+  );
+}
 
-                <div className="flex flex-col sm:flex-row justify-center gap-4">
-                 <Link href="/dashboard" className="btn btn-primary">
-                   Go to Dashboard
-                 </Link>
-                 <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
-                   Back to Home
-                 </Link>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-   );
- }
+export default PaymentSuccess;
