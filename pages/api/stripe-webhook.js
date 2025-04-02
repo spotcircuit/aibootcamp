@@ -100,12 +100,28 @@ async function handleCheckoutSessionCompleted(session) {
       
       // Create a new registration record
       try {
+        // First, try to find a user with the customer's email
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, auth_user_id')
+          .eq('email', customerEmail)
+          .maybeSingle();
+        
+        // Get auth_user_id from user data if available
+        const auth_user_id = userData?.auth_user_id || null;
+        
+        if (userError) {
+          console.error('Error finding user by email:', userError);
+          // Continue without user ID
+        }
+        
         const { data, error } = await supabase
           .from('registrations')
           .insert([{
             event_id: eventId,
             name: customerName || 'Unknown',
             email: customerEmail,
+            auth_user_id: auth_user_id, // Include auth_user_id if found
             stripe_session_id: session.id,
             stripe_payment_id: session.payment_intent,
             amount_paid: session.amount_total / 100, // Convert from cents to dollars
