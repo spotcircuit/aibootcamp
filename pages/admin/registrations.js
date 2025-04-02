@@ -27,67 +27,24 @@ function RegistrationsAdmin() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
-      // First try the registrations table
-      let registrationsData = [];
+      setLoading(true);
       
-      // Try the registrations table first
-      let query = supabase
+      // Get all registrations
+      const { data: regsData, error: regsError } = await supabase
         .from('registrations')
-        .select(`
-          *,
-          events (id, title, date, start_date, name)
-        `);
+        .select('*, events(*)');
       
-      // Apply filters if set
-      if (filter.event) {
-        query = query.eq('event_id', filter.event);
+      if (regsError) {
+        console.error('Error fetching registrations:', regsError);
+        // toast.error('Failed to load registrations');
       }
       
-      if (filter.status) {
-        query = query.eq('status', filter.status);
-      }
-      
-      const { data: regsData, error: regsError } = await query.order('created_at', { ascending: false });
-      
-      if (regsError && regsError.code !== '42P01') {
-        throw regsError;
-      }
-      
-      if (regsData && regsData.length > 0) {
-        registrationsData = regsData;
-      } else {
-        // If no data in registrations table or it doesn't exist, try event_registrations
-        let eventRegsQuery = supabase
-          .from('event_registrations')
-          .select(`
-            *,
-            events (id, title, date, start_date, name),
-            users (id, name, email)
-          `);
-        
-        // Apply filters if set
-        if (filter.event) {
-          eventRegsQuery = eventRegsQuery.eq('event_id', filter.event);
-        }
-        
-        if (filter.status) {
-          eventRegsQuery = eventRegsQuery.eq('status', filter.status);
-        }
-        
-        const { data: eventRegsData, error: eventRegsError } = await eventRegsQuery.order('created_at', { ascending: false });
-        
-        if (eventRegsError && eventRegsError.code !== '42P01') {
-          throw eventRegsError;
-        }
-        
-        if (eventRegsData) {
-          registrationsData = eventRegsData;
-        }
-      }
-      
-      setRegistrations(registrationsData);
+      setRegistrations(regsData || []);
+      setLoading(false);
     } catch (error) {
-      console.error('Error fetching registrations:', error.message);
+      console.error('Error in fetchRegistrations:', error);
+      // toast.error('An unexpected error occurred');
+      setLoading(false);
     }
   }, [filter.event, filter.status]);
 
@@ -248,7 +205,7 @@ function RegistrationsAdmin() {
       if (currentRegistration) {
         // Update existing registration
         const { error: updateError } = await supabase
-          .from('event_registrations')
+          .from('registrations')
           .update({
             user_id: formData.user_id,
             event_id: formData.event_id,
@@ -263,7 +220,7 @@ function RegistrationsAdmin() {
       } else {
         // Create new registration
         const { error: insertError } = await supabase
-          .from('event_registrations')
+          .from('registrations')
           .insert([{
             user_id: formData.user_id,
             event_id: formData.event_id,
@@ -296,7 +253,7 @@ function RegistrationsAdmin() {
     
     try {
       const { error } = await supabase
-        .from('event_registrations')
+        .from('registrations')
         .delete()
         .eq('id', registrationId);
       

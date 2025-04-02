@@ -33,18 +33,23 @@ export async function getServerSideProps(context) {
   const hasUserSession = !!loggedInUserId;
   if (!hasUserSession) { 
     console.error('Error: No logged-in user found, but auth_user_id is required by the database.');
-    // We'll continue and let the webhook handle the registration creation
-    // Instead of returning an error immediately
+    // We'll continue and try to create a registration with userId from URL if available
   }
 
-  const { session_id } = context.query;
+  const { session_id, userId, eventId } = context.query;
   let session;
   let eventDetails = null;
   let registrationDetails = null;
   let errorMessage = null;
   let customerEmail = null;
-  // Get eventId from URL query parameter INSTEAD of metadata
-  let eventId = context.query.eventId;
+
+  // Use userId from URL if available and no active session
+  const effectiveUserId = hasUserSession ? loggedInUserId : (userId || null);
+  if (effectiveUserId) {
+    console.log(`Using effectiveUserId: ${effectiveUserId} (from ${hasUserSession ? 'session' : 'URL'})`);
+  } else {
+    console.log('No user ID available from session or URL');
+  }
 
   // Initialize Supabase Admin Client for elevated operations
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -62,8 +67,6 @@ export async function getServerSideProps(context) {
     }
 
     // 4. Extract data from Stripe/URL (keep as is)
-    // eventId is now taken directly from context.query.eventId above
-    // eventId = session.metadata?.eventId;
     customerEmail = session.customer_details?.email;
     const amountPaid = session.amount_total;
 
@@ -114,28 +117,34 @@ export async function getServerSideProps(context) {
       if (!existingReg.paid_at) {
          const { error: updateError } = await supabaseAdmin
           .from('registrations')
-          .update({ paid_at: new Date().toISOString(), payment_status: 'paid' })
+          .update({ 
+            paid_at: new Date().toISOString(), 
+            payment_status: 'paid',
+            updated_at: new Date().toISOString()
+          })
           .eq('id', existingReg.id);
          if (updateError) console.error('Error updating existing registration paid_at:', updateError);
       }
 
 
-    } else if (eventDetails && customerEmail && hasUserSession) { 
-      // 7. Registration not found, CREATE it using loggedInUserId (which is confirmed non-null)
+    } else if (eventDetails && customerEmail) { 
+      // 7. Registration not found, CREATE it using effectiveUserId if available
       // 5. Registration not found, CREATE it since payment was successful
-      console.log(`Registration for session ${session_id} not found, creating for user ${loggedInUserId}...`);
+      console.log(`Registration for session ${session_id} not found, creating for user ${effectiveUserId || 'unknown'}...`);
       const { data: newReg, error: createRegError } = await supabaseAdmin
         .from('registrations') // Use 'registrations' table
         .insert({
           event_id: eventId,
-          email: customerEmail, // Assuming you have an email column
-          auth_user_id: loggedInUserId, // Use the ID fetched from the user's session
+          email: customerEmail,
+          name: session.customer_details?.name || 'Unknown',
+          auth_user_id: effectiveUserId,
           stripe_session_id: session_id,
+          stripe_payment_id: session.payment_intent,
           payment_status: 'paid',
           paid_at: new Date().toISOString(),
-          registration_date: new Date().toISOString(),
-          amount_paid: amountPaid ? amountPaid / 100 : null // Store amount in base units (e.g., dollars)
-          // Add other necessary fields with default or retrieved values
+          amount_paid: amountPaid ? amountPaid / 100 : null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select('*, events(*)') // Select the newly created record with event details
         .single();
@@ -155,8 +164,8 @@ export async function getServerSideProps(context) {
        } else if (!customerEmail) {
          console.error('Cannot create registration: Customer email missing.');
          errorMessage = (errorMessage ? errorMessage + ' ' : '') + 'Could not create registration due to missing email information.';
-       } else if (!hasUserSession) {
-         console.log('No user session found. The webhook will handle registration creation.');
+       } else if (!effectiveUserId) {
+         console.log('No user ID available from session or URL');
          // This is expected in some cases - the webhook will create the registration
          // We'll show a special message to the user
          errorMessage = null; // Clear any error message

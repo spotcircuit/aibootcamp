@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-// Load Stripe script only once at the application level
-if (typeof window !== 'undefined' && !document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]')) {
-  const script = document.createElement('script');
-  script.src = 'https://js.stripe.com/v3/buy-button.js';
-  script.async = true;
-  document.body.appendChild(script);
-}
-
-export default function EventRegistration({ event, user }) {
+export default function EventRegistration({ event, user, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -24,18 +16,14 @@ export default function EventRegistration({ event, user }) {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  // When using Stripe Buy Button, we don't need custom payment handling
-  // The button handles the checkout process directly
   
-  // We'll still want to save the user's information
-  const saveUserInfo = async () => {
+  // Save user info and create a registration
+  const handleRegistration = async () => {
     try {
       setLoading(true);
       setError(null);
-      setSuccessMessage(null);
       
-      // Only save user info if we have a name and email
+      // Validate form
       if (!formData.name || !formData.email) {
         setError('Name and email are required');
         setLoading(false);
@@ -55,28 +43,67 @@ export default function EventRegistration({ event, user }) {
         if (error) {
           console.error('Error updating user info:', error);
           setError('Failed to update profile: ' + error.message);
-        } else {
-          setSuccessMessage('Profile updated successfully');
-          // Hide success message after 3 seconds
-          setTimeout(() => setSuccessMessage(null), 3000);
+          setLoading(false);
+          return;
         }
       }
+      
+      // Create a registration record
+      const { data: registration, error: regError } = await supabase
+        .from('registrations')
+        .insert([
+          {
+            event_id: event.id,
+            auth_user_id: user?.id,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            experience_level: formData.experience,
+            payment_status: 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ])
+        .select()
+        .single();
+      
+      if (regError) {
+        console.error('Error creating registration:', regError);
+        setError('Failed to create registration: ' + regError.message);
+        setLoading(false);
+        return;
+      }
+      
+      // Create Stripe checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          registrationId: registration.id,
+          amount: event.price || 199,
+          email: formData.email
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+      
+      const { url } = await response.json();
+      
+      // Redirect to Stripe checkout in the same window
+      window.location.href = url;
+      
     } catch (error) {
-      console.error('Error saving user info:', error);
-      setError('An unexpected error occurred');
-    } finally {
+      console.error('Error during registration:', error);
+      setError(error.message || 'An unexpected error occurred');
       setLoading(false);
     }
   };
-  
-  // Only save user info when explicitly requested, not on every change
-  // This prevents excessive updates that could cause page reloads
-  
-  // Initialize Stripe Buy Button only once when component mounts
-  useEffect(() => {
-    // This effect runs only once on component mount
-    // No cleanup needed as we're not setting up any subscriptions
-  }, []);
 
   return (
     <div className="mt-6">
@@ -159,28 +186,16 @@ export default function EventRegistration({ event, user }) {
                 Price: ${event.price || 199}
               </p>
             </div>
-            
-            <button
-              type="button"
-              onClick={saveUserInfo}
-              disabled={loading}
-              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              Update Profile
-            </button>
           </div>
           
-          {/* Stripe Buy Button */}
-          <div className="w-full">
-            <stripe-buy-button
-              buy-button-id="buy_btn_1R6FgLI7NYD96A52uaoF4iLW"
-              publishable-key="pk_live_51PEbgkI7NYD96A52oKRZ3UwZ3kLqE66a6frydjKbnyV051QOZVkf4Rn2Ux2ioPDcwmL7Qbg1IVd09663MPG9tScC00FF6sQ2KK"
-              customer-email={formData.email}
-              customer-name={formData.name}
-              client-reference-id={event.id.toString()}
-            >
-            </stripe-buy-button>
-          </div>
+          {/* Custom Checkout Button */}
+          <button
+            onClick={handleRegistration}
+            disabled={loading}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md shadow-sm disabled:opacity-50"
+          >
+            {loading ? 'Processing...' : `Register Now - $${event.price || 199}`}
+          </button>
         </div>
       </div>
     </div>

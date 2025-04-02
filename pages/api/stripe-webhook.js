@@ -22,6 +22,8 @@ export default async function handler(req, res) {
     const rawBody = await buffer(req);
     const signature = req.headers['stripe-signature'];
     
+    console.log('Received Stripe webhook with signature:', signature ? 'present' : 'missing');
+    
     // Verify the event came from Stripe
     let event;
     try {
@@ -30,6 +32,7 @@ export default async function handler(req, res) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       );
+      console.log('Webhook signature verified successfully for event type:', event.type);
     } catch (err) {
       console.error(`⚠️ Webhook signature verification failed.`, err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -38,12 +41,15 @@ export default async function handler(req, res) {
     // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Processing checkout.session.completed event:', event.data.object.id);
         await handleCheckoutSessionCompleted(event.data.object);
         break;
       case 'payment_intent.succeeded':
+        console.log('Processing payment_intent.succeeded event:', event.data.object.id);
         await handlePaymentIntentSucceeded(event.data.object);
         break;
       case 'payment_intent.payment_failed':
+        console.log('Processing payment_intent.payment_failed event:', event.data.object.id);
         await handlePaymentIntentFailed(event.data.object);
         break;
       default:
@@ -63,6 +69,14 @@ export default async function handler(req, res) {
  */
 async function handleCheckoutSessionCompleted(session) {
   try {
+    console.log('=== HANDLING CHECKOUT SESSION COMPLETED ===');
+    console.log('Session ID:', session.id);
+    console.log('Payment status:', session.payment_status);
+    console.log('Customer email:', session.customer_details?.email);
+    console.log('Amount total:', session.amount_total);
+    console.log('Client reference ID:', session.client_reference_id);
+    console.log('Metadata:', JSON.stringify(session.metadata || {}));
+    
     // Get the registration ID from the client_reference_id
     let registrationId = session.client_reference_id;
     
@@ -101,6 +115,7 @@ async function handleCheckoutSessionCompleted(session) {
       // Create a new registration record
       try {
         // First, try to find a user with the customer's email
+        console.log(`Looking for user with email: ${customerEmail}`);
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id, auth_user_id')
@@ -113,7 +128,25 @@ async function handleCheckoutSessionCompleted(session) {
         if (userError) {
           console.error('Error finding user by email:', userError);
           // Continue without user ID
+        } else if (userData) {
+          console.log(`Found user with email ${customerEmail}, auth_user_id: ${auth_user_id}`);
+        } else {
+          console.log(`No user found with email ${customerEmail}`);
         }
+        
+        console.log('Attempting to insert registration with data:', {
+          event_id: eventId,
+          name: customerName || 'Unknown',
+          email: customerEmail,
+          auth_user_id: auth_user_id,
+          stripe_session_id: session.id,
+          stripe_payment_id: session.payment_intent,
+          amount_paid: session.amount_total / 100,
+          payment_status: 'paid',
+          paid_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
         
         const { data, error } = await supabase
           .from('registrations')
@@ -125,7 +158,8 @@ async function handleCheckoutSessionCompleted(session) {
             stripe_session_id: session.id,
             stripe_payment_id: session.payment_intent,
             amount_paid: session.amount_total / 100, // Convert from cents to dollars
-            payment_status: 'completed',
+            payment_status: 'paid',
+            paid_at: new Date().toISOString(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }])
@@ -133,39 +167,19 @@ async function handleCheckoutSessionCompleted(session) {
         
         if (error) {
           console.error('Error creating registration:', error);
+          console.error('Error details:', JSON.stringify(error));
           throw error;
         }
         
         if (data && data.length > 0) {
           registrationId = data[0].id;
           console.log(`Created new registration ${registrationId} for session ${session.id}`);
+        } else {
+          console.log('Registration insert succeeded but no data returned');
         }
-      } catch {
-        // Try event_registrations table as fallback
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('event_registrations')
-          .insert([{
-            event_id: eventId,
-            name: customerName || 'Unknown',
-            email: customerEmail,
-            stripe_session_id: session.id,
-            stripe_payment_id: session.payment_intent,
-            amount_paid: session.amount_total / 100,
-            payment_status: 'completed',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
-          .select();
-        
-        if (fallbackError) {
-          console.error('Error creating event_registration:', fallbackError);
-          throw fallbackError;
-        }
-        
-        if (fallbackData && fallbackData.length > 0) {
-          registrationId = fallbackData[0].id;
-          console.log(`Created new event_registration ${registrationId} for session ${session.id}`);
-        }
+      } catch (insertError) {
+        console.error('Exception during registration insert:', insertError);
+        console.error('Failed to create registration record');
       }
     } else {
       // Update the existing registration with the payment information
@@ -173,7 +187,8 @@ async function handleCheckoutSessionCompleted(session) {
         stripe_session_id: session.id,
         stripe_payment_id: session.payment_intent,
         amount_paid: session.amount_total / 100, // Convert from cents to dollars
-        payment_status: 'completed',
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
       
@@ -203,7 +218,8 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
     await updateRegistration(registrationId, {
       stripe_payment_id: paymentIntent.id,
       amount_paid: paymentIntent.amount / 100, // Convert from cents to dollars
-      payment_status: 'completed',
+      payment_status: 'paid',
+      paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
     
@@ -248,37 +264,31 @@ async function handlePaymentIntentFailed(paymentIntent) {
  * @param {Object} updateData - The data to update
  */
 async function updateRegistration(registrationId, updateData) {
-  // Try to update in registrations table first
   try {
-    const { error } = await supabase
+    console.log(`Updating registration ${registrationId} with data:`, updateData);
+    
+    // Update the registration
+    const { data: regData, error: regError } = await supabase
       .from('registrations')
       .update(updateData)
-      .eq('id', registrationId);
+      .eq('id', registrationId)
+      .select();
     
-    if (error) {
-      if (error.code === '42P01') {
-        // Table doesn't exist, try event_registrations
-        throw error;
-      } else {
-        console.error('Error updating registration:', error);
-        throw error;
-      }
+    if (regError) {
+      console.error('Error updating registration:', regError);
+      console.error('Error details:', JSON.stringify(regError));
+      throw regError;
     }
-  } catch {
-    // Fallback to event_registrations table
-    try {
-      const { error: fallbackError } = await supabase
-        .from('event_registrations')
-        .update(updateData)
-        .eq('id', registrationId);
-      
-      if (fallbackError) {
-        console.error('Error updating event_registration:', fallbackError);
-        throw fallbackError;
-      }
-    } catch (fallbackError) {
-      console.error('Error in fallback update:', fallbackError);
-      throw fallbackError;
+    
+    if (regData && regData.length > 0) {
+      console.log(`Successfully updated registration ${registrationId}`);
+      return regData[0];
+    } else {
+      console.log(`No registration found with ID ${registrationId}`);
+      return null;
     }
+  } catch (error) {
+    console.error('Error in updateRegistration:', error);
+    throw error;
   }
 }

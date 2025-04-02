@@ -16,6 +16,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
+    // Get the current user's ID if available
+    let userId = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id || null;
+      console.log(`User ID for checkout: ${userId || 'Not available'}`);
+    } catch (authError) {
+      console.error('Error getting user for checkout:', authError);
+    }
+
     // Get the app URL from environment variables or use a default
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -35,11 +45,12 @@ export default async function handler(req, res) {
       metadata: {
         registrationId,
         eventId,
+        userId: userId || '', // Include userId in metadata
       },
       customer_email: email,
       client_reference_id: registrationId,
       mode: 'payment',
-      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&registration_id=${registrationId}`,
+      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&eventId=${eventId}${userId ? `&userId=${userId}` : ''}`,
       cancel_url: `${appUrl}/payment/cancel?registration_id=${registrationId}`,
     });
 

@@ -35,7 +35,7 @@ function Dashboard({ user }) {
     try {
       let userRegistrations = [];
 
-      // Try to fetch from registrations table first
+      // Try to fetch from registrations table
       const { data: regsData, error: regsError } = await supabase
         .from('registrations')
         .select(`
@@ -44,29 +44,11 @@ function Dashboard({ user }) {
         `)
         .eq('auth_user_id', userId);
 
-      if (regsError && regsError.code !== '42P01') {
+      if (regsError) {
         console.error('Registrations fetch error:', regsError);
       } else if (regsData && regsData.length > 0) {
         console.log('Found registrations in registrations table:', regsData.length);
         userRegistrations = regsData;
-      }
-
-      // If no registrations found, try the event_registrations table
-      if (userRegistrations.length === 0) {
-        const { data: eventRegsData, error: eventRegsError } = await supabase
-          .from('event_registrations')
-          .select(`
-            *,
-            events (*)
-          `)
-          .eq('auth_user_id', userId);
-
-        if (eventRegsError && eventRegsError.code !== '42P01') {
-          console.error('Event registration fetch error:', eventRegsError);
-        } else if (eventRegsData && eventRegsData.length > 0) {
-          console.log('Found registrations in event_registrations table:', eventRegsData.length);
-          userRegistrations = eventRegsData;
-        }
       }
 
       // Also check if the user's email is in any registrations without auth_user_id
@@ -80,7 +62,7 @@ function Dashboard({ user }) {
           .eq('email', user.email)
           .is('auth_user_id', null);
 
-        if (emailRegsError && emailRegsError.code !== '42P01') {
+        if (emailRegsError) {
           console.error('Email registrations fetch error:', emailRegsError);
         } else if (emailRegsData && emailRegsData.length > 0) {
           console.log('Found registrations by email in registrations table:', emailRegsData.length);
