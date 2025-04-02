@@ -30,11 +30,11 @@ function Dashboard({ user }) {
 
     fetchData();
   }, [user]);
-  
+
   const fetchUserData = async (userId) => {
     try {
       let userRegistrations = [];
-      
+
       // Try to fetch from registrations table first
       const { data: regsData, error: regsError } = await supabase
         .from('registrations')
@@ -43,10 +43,16 @@ function Dashboard({ user }) {
           events (*)
         `)
         .eq('auth_user_id', userId);
-      
-      // If that fails, try event_registrations table
-      if (regsError && regsError.code === '42P01') {
-        console.log('Registrations table not found, trying event_registrations');
+
+      if (regsError && regsError.code !== '42P01') {
+        console.error('Registrations fetch error:', regsError);
+      } else if (regsData && regsData.length > 0) {
+        console.log('Found registrations in registrations table:', regsData.length);
+        userRegistrations = regsData;
+      }
+
+      // If no registrations found, try the event_registrations table
+      if (userRegistrations.length === 0) {
         const { data: eventRegsData, error: eventRegsError } = await supabase
           .from('event_registrations')
           .select(`
@@ -54,28 +60,58 @@ function Dashboard({ user }) {
             events (*)
           `)
           .eq('auth_user_id', userId);
-        
-        if (eventRegsError) {
-          if (eventRegsError.code === '42P01') {
-            console.log('Event registrations table not found. Treating as no registrations.');
-          } else {
-            console.error('Event registration fetch error:', eventRegsError);
-          }
-        } else {
-          userRegistrations = eventRegsData || [];
+
+        if (eventRegsError && eventRegsError.code !== '42P01') {
+          console.error('Event registration fetch error:', eventRegsError);
+        } else if (eventRegsData && eventRegsData.length > 0) {
+          console.log('Found registrations in event_registrations table:', eventRegsData.length);
+          userRegistrations = eventRegsData;
         }
-      } else {
-        userRegistrations = regsData || [];
       }
-      
+
+      // Also check if the user's email is in any registrations without auth_user_id
+      if (user && user.email) {
+        const { data: emailRegsData, error: emailRegsError } = await supabase
+          .from('registrations')
+          .select(`
+            *,
+            events (*)
+          `)
+          .eq('email', user.email)
+          .is('auth_user_id', null);
+
+        if (emailRegsError && emailRegsError.code !== '42P01') {
+          console.error('Email registrations fetch error:', emailRegsError);
+        } else if (emailRegsData && emailRegsData.length > 0) {
+          console.log('Found registrations by email in registrations table:', emailRegsData.length);
+
+          // Update these registrations to include the user's auth_user_id
+          for (const reg of emailRegsData) {
+            const { error: updateError } = await supabase
+              .from('registrations')
+              .update({ auth_user_id: userId })
+              .eq('id', reg.id);
+
+            if (updateError) {
+              console.error(`Error updating registration ${reg.id} with auth_user_id:`, updateError);
+            } else {
+              console.log(`Updated registration ${reg.id} with auth_user_id ${userId}`);
+            }
+          }
+
+          // Add these to the user's registrations
+          userRegistrations = [...userRegistrations, ...emailRegsData];
+        }
+      }
+
       setRegistrations(userRegistrations);
-      
+
       // Fetch available events
       const { data: allEvents, error: eventsError } = await supabase
         .from('events')
         .select('*')
         .order('date', { ascending: true });
-      
+
       if (eventsError) {
         if (eventsError.code === '42P01') { // Table does not exist error
           console.log('Events table not found. Setting empty events array.');
@@ -110,10 +146,10 @@ function Dashboard({ user }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-gray-100">Your Dashboard</h1>
-        
+
         {loading ? (
           <div className="flex justify-center">
             <div className="animate-pulse flex space-x-4">
@@ -151,7 +187,7 @@ function Dashboard({ user }) {
 
             <div className="mt-8">
               <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Your Registrations</h2>
-              
+
               {loading ? (
                 <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-32 rounded-lg"></div>
               ) : error ? (
@@ -174,7 +210,7 @@ function Dashboard({ user }) {
                       <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
                         {registration.events?.name || registration.events?.title || 'Unknown Event'}
                       </h3>
-                      
+
                       <div className="mb-4">
                         <p className="text-gray-600 dark:text-gray-400 mb-1">
                           <span className="font-medium">Date:</span> {
@@ -187,7 +223,7 @@ function Dashboard({ user }) {
                               : 'TBD'
                           }
                         </p>
-                        
+
                         <p className="text-gray-600 dark:text-gray-400 mb-1">
                           <span className="font-medium">Time:</span> {
                             registration.events?.start_date
@@ -198,11 +234,11 @@ function Dashboard({ user }) {
                               : 'TBD'
                           }
                         </p>
-                        
+
                         <p className="text-gray-600 dark:text-gray-400 mb-1">
                           <span className="font-medium">Location:</span> {registration.events?.location || 'Online (Zoom)'}
                         </p>
-                        
+
                         <p className="text-gray-600 dark:text-gray-400 mb-1">
                           <span className="font-medium">Payment:</span> {
                             registration.amount_paid
@@ -213,12 +249,12 @@ function Dashboard({ user }) {
                           }
                         </p>
                       </div>
-                      
+
                       <div className="flex space-x-3">
                         <Link href={`/events/${registration.event_id}`} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                           View Event
                         </Link>
-                        
+
                         {/* We could add a "Cancel Registration" button here if needed in the future */}
                       </div>
                     </div>
@@ -229,7 +265,7 @@ function Dashboard({ user }) {
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">Upcoming Events</h2>
-              
+
               {events.length === 0 ? (
                 <p className="text-gray-600 dark:text-gray-400 py-4">No upcoming events at the moment. Check back later!</p>
               ) : (
@@ -239,7 +275,7 @@ function Dashboard({ user }) {
                       <h3 className="font-bold text-gray-800 dark:text-white">{event.name}</h3>
                       <p className="text-gray-600 dark:text-gray-400 mt-1">{formatDate(event.start_date)}</p>
                       <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">{event.description}</p>
-                      
+
                       <div className="mt-4">
                         <Link href={`/events/${event.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
                           View Details
@@ -249,7 +285,7 @@ function Dashboard({ user }) {
                   ))}
                 </div>
               )}
-              
+
               {events.length > 4 && (
                 <div className="mt-6 text-center">
                   <Link href="/events" className="text-cyan-600 dark:text-cyan-400 hover:underline">
@@ -261,7 +297,7 @@ function Dashboard({ user }) {
           </div>
         )}
       </div>
-      
+
       <footer className="bg-gray-800 text-white py-8 mt-10">
         <div className="container mx-auto px-4">
           <p className="text-center">

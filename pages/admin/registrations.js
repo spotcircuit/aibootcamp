@@ -27,12 +27,15 @@ function RegistrationsAdmin() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
+      // First try the registrations table
+      let registrationsData = [];
+      
+      // Try the registrations table first
       let query = supabase
-        .from('event_registrations')
+        .from('registrations')
         .select(`
           *,
-          events (id, title, date),
-          users (id, name, email)
+          events (id, title, date, start_date, name)
         `);
       
       // Apply filters if set
@@ -44,18 +47,45 @@ function RegistrationsAdmin() {
         query = query.eq('status', filter.status);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: regsData, error: regsError } = await query.order('created_at', { ascending: false });
       
-      if (error) {
-        if (error.code === '42P01') { // Table doesn't exist
-          console.log('Registrations table does not exist yet.');
-          setRegistrations([]);
-          return;
-        }
-        throw error;
+      if (regsError && regsError.code !== '42P01') {
+        throw regsError;
       }
       
-      setRegistrations(data || []);
+      if (regsData && regsData.length > 0) {
+        registrationsData = regsData;
+      } else {
+        // If no data in registrations table or it doesn't exist, try event_registrations
+        let eventRegsQuery = supabase
+          .from('event_registrations')
+          .select(`
+            *,
+            events (id, title, date, start_date, name),
+            users (id, name, email)
+          `);
+        
+        // Apply filters if set
+        if (filter.event) {
+          eventRegsQuery = eventRegsQuery.eq('event_id', filter.event);
+        }
+        
+        if (filter.status) {
+          eventRegsQuery = eventRegsQuery.eq('status', filter.status);
+        }
+        
+        const { data: eventRegsData, error: eventRegsError } = await eventRegsQuery.order('created_at', { ascending: false });
+        
+        if (eventRegsError && eventRegsError.code !== '42P01') {
+          throw eventRegsError;
+        }
+        
+        if (eventRegsData) {
+          registrationsData = eventRegsData;
+        }
+      }
+      
+      setRegistrations(registrationsData);
     } catch (error) {
       console.error('Error fetching registrations:', error.message);
     }
