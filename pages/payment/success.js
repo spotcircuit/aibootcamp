@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js'; // Keep for admin client if needed
 
@@ -16,7 +16,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // --- SERVER-SIDE DATA FETCHING ---
 export async function getServerSideProps(context) {
   // 1. Create a Supabase client authenticated for the current server request
-  const supabase = createServerSupabaseClient(context); // Use the helper
+  const supabase = createPagesServerClient(context); // Use the helper
 
   // 2. Get the logged-in user's session
   const { data: { user }, error: userError } = await supabase.auth.getUser();
