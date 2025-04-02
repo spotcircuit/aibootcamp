@@ -18,7 +18,10 @@ export default function EventRegistration({ event, user }) {
   };
   
   // Save user info and create a registration
-  const handleRegistration = async () => {
+  const handleRegistration = async (e) => {
+    // Prevent default form submission behavior
+    e.preventDefault();
+    
     try {
       setLoading(true);
       setError(null);

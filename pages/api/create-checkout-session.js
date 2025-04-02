@@ -64,27 +64,22 @@ export default async function handler(req, res) {
         })
         .eq('id', registrationId);
       
-      if (error && error.code === '42P01') {
-        // Try event_registrations table
-        await supabase
-          .from('event_registrations')
-          .update({
-            stripe_session_id: session.id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', registrationId);
+      if (error) {
+        console.error('Error updating registration with session ID:', error);
+        // Continue even if there's an error updating the registration
       }
     } catch (error) {
       console.error('Error updating registration with session ID:', error);
       // Continue even if there's an error updating the registration
     }
 
-    return res.status(200).json({
-      sessionId: session.id,
-      url: session.url
-    });
+    // Return the session URL for client-side redirect
+    return res.status(200).json({ url: session.url });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return res.status(500).json({ error: 'Failed to create checkout session' });
+    return res.status(500).json({ 
+      error: 'Failed to create checkout session',
+      details: error.message 
+    });
   }
 }
