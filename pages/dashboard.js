@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
@@ -10,28 +10,7 @@ function Dashboard({ user }) {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (user) {
-          console.log('Dashboard: Fetching data for user', user.id);
-          // Fetch user's registrations
-          fetchUserData(user.id);
-        } else {
-          console.log('Dashboard: No user available yet');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setError('Error loading data: ' + error.message);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  const fetchUserData = async (userId) => {
+  const fetchUserData = useCallback(async (userId) => {
     try {
       let userRegistrations = [];
 
@@ -113,7 +92,28 @@ function Dashboard({ user }) {
       setError('Unable to retrieve your events information at this time.');
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (user) {
+          console.log('Dashboard: Fetching data for user', user.id);
+          // Fetch user's registrations
+          fetchUserData(user.id);
+        } else {
+          console.log('Dashboard: No user available yet');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError('Error loading data: ' + error.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';

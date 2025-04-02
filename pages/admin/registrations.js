@@ -46,7 +46,7 @@ function RegistrationsAdmin() {
       // toast.error('An unexpected error occurred');
       setLoading(false);
     }
-  }, [filter.event, filter.status]);
+  }, []);
 
   useEffect(() => {
     // Check if user is an administrator

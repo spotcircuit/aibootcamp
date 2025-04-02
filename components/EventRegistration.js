@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function EventRegistration({ event, user, onSuccess }) {
+export default function EventRegistration({ event, user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  
   const [formData, setFormData] = useState({
     name: user?.user_metadata?.name || '',
     email: user?.email || '',
@@ -173,12 +173,6 @@ export default function EventRegistration({ event, user, onSuccess }) {
           </div>
         )}
         
-        {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {successMessage}
-          </div>
-        )}
-
         <div className="flex flex-col items-center space-y-4">
           <div className="flex justify-between w-full">
             <div className="text-sm">
