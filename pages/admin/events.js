@@ -10,7 +10,9 @@ export default function EventsAdmin() {
     start_date: '',
     end_date: '',
     capacity: 30,
-    price: 199
+    price: 199,
+    meeting_link: '',
+    meeting_type: 'zoom'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -189,6 +191,34 @@ export default function EventsAdmin() {
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Type</label>
+                  <select
+                    value={formData.meeting_type}
+                    onChange={(e) => setFormData({ ...formData, meeting_type: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="zoom">Zoom</option>
+                    <option value="google_meet">Google Meet</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meeting Link</label>
+                  <input
+                    type="url"
+                    placeholder="https://zoom.us/j/123456789 or similar"
+                    value={formData.meeting_link}
+                    onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                  <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                    This link will be included in registration confirmation emails
+                  </p>
+                </div>
               </div>
 
               <button
@@ -215,6 +245,15 @@ export default function EventsAdmin() {
                         <p>End: {new Date(event.end_date).toLocaleString()}</p>
                         <p>Capacity: {event.capacity}</p>
                         <p>Price: ${event.price}</p>
+                        {event.meeting_link ? (
+                          <p className="text-indigo-600 dark:text-indigo-400 mt-1">
+                            <span className="font-medium">{event.meeting_type === 'zoom' ? 'Zoom' : 
+                                                           event.meeting_type === 'google_meet' ? 'Google Meet' : 
+                                                           event.meeting_type === 'teams' ? 'Microsoft Teams' : 'Meeting'} Link:</span> {event.meeting_link}
+                          </p>
+                        ) : (
+                          <p className="text-yellow-600 dark:text-yellow-400 mt-1">No meeting link set</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex space-x-2">

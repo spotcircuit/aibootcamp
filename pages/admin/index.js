@@ -222,7 +222,9 @@ function AdminDashboard() {
       end_date: new Date(event.end_date).toISOString().slice(0, 16),
       location: event.location,
       price: event.price,
-      instructor_id: event.instructor_id
+      instructor_id: event.instructor_id,
+      meeting_link: event.meeting_link || '',
+      meeting_type: event.meeting_type || ''
     });
   };
 
@@ -625,6 +627,24 @@ function AdminDashboard() {
                   <p>Time: {new Date(selectedEvent.start_date).toLocaleTimeString()}</p>
                   <p>Location: {selectedEvent.location}</p>
                   <p>Price: ${selectedEvent.price}</p>
+                  {selectedEvent.meeting_link && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                      <p className="font-medium text-blue-800">
+                        {selectedEvent.meeting_type === 'zoom' ? 'Zoom' : 
+                         selectedEvent.meeting_type === 'google_meet' ? 'Google Meet' : 
+                         selectedEvent.meeting_type === 'teams' ? 'Microsoft Teams' : 'Meeting'} Link:
+                      </p>
+                      <a 
+                        href={selectedEvent.meeting_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline break-all"
+                      >
+                        {selectedEvent.meeting_link}
+                      </a>
+                      <p className="text-xs mt-1">This link will be sent to attendees in registration emails.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -742,6 +762,41 @@ function AdminDashboard() {
                     className="w-full p-2 border rounded"
                     required
                   />
+                </div>
+                
+                {/* Meeting Type Dropdown (Optional) */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">
+                    Meeting Type <span className="text-gray-500 font-normal">(optional)</span>
+                  </label>
+                  <select
+                    value={editingEvent.meeting_type || ''}
+                    onChange={(e) => setEditingEvent({...editingEvent, meeting_type: e.target.value})}
+                    className="w-full p-2 border rounded bg-white"
+                  >
+                    <option value="">-- Select Meeting Type --</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="google_meet">Google Meet</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                {/* Meeting Link (Optional) */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Meeting Link <span className="text-gray-500 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://zoom.us/j/123456789 or similar"
+                    value={editingEvent.meeting_link || ''}
+                    onChange={(e) => setEditingEvent({...editingEvent, meeting_link: e.target.value})}
+                    className="w-full p-2 border rounded"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This link will be included in registration confirmation emails. You can add this later if not available now.
+                  </p>
                 </div>
 
                 {/* Instructor Selection Dropdown */}

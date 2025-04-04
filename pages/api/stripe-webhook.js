@@ -123,6 +123,55 @@ async function handleCheckoutSessionCompleted(session) {
       }
       
       console.log(`Successfully updated registration ${registrationId}`);
+      
+      // Send confirmation email now that payment is complete
+      try {
+        // Get the event details
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
+        
+        if (eventError) {
+          console.error('Error fetching event details for email:', eventError);
+          return;
+        }
+        
+        console.log('Sending registration confirmation email after payment...');
+        const emailResponse = await fetch(`${getAppUrl()}/api/sendRegistrationEmail`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Include authorization header for server-to-server requests
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+          },
+          body: JSON.stringify({
+            registrationId: registrationId,
+            eventId: eventId,
+            eventTitle: eventData.name,
+            eventDate: eventData.start_date,
+            name: existingReg.name,
+            email: existingReg.email
+          }),
+        });
+        
+        if (emailResponse.ok) {
+          const emailResult = await emailResponse.json();
+          console.log('Registration confirmation email sent successfully after payment:', emailResult);
+          
+          // Update the registration to mark email as sent
+          await supabase
+            .from('registrations')
+            .update({ email_sent: true })
+            .eq('id', registrationId);
+        } else {
+          console.error('Failed to send registration email after payment:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending registration email after payment:', emailError);
+      }
+      
       return;
     } else {
       console.log(`No existing registration found with ID ${registrationId}`);
@@ -194,6 +243,54 @@ async function handleCheckoutSessionCompleted(session) {
       if (data && data.length > 0) {
         registrationId = data[0].id;
         console.log(`Created new registration ${registrationId} for session ${session.id}`);
+        
+        // Send confirmation email for the new registration
+        try {
+          // Get the event details
+          const { data: eventData, error: eventError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+          
+          if (eventError) {
+            console.error('Error fetching event details for email:', eventError);
+            return;
+          }
+          
+          console.log('Sending registration confirmation email for new registration...');
+          const emailResponse = await fetch(`${getAppUrl()}/api/sendRegistrationEmail`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // Include authorization header for server-to-server requests
+              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            body: JSON.stringify({
+              registrationId: registrationId,
+              eventId: eventId,
+              eventTitle: eventData.name,
+              eventDate: eventData.start_date,
+              name: customerName || 'Customer',
+              email: customerEmail
+            }),
+          });
+          
+          if (emailResponse.ok) {
+            const emailResult = await emailResponse.json();
+            console.log('Registration confirmation email sent successfully for new registration:', emailResult);
+            
+            // Update the registration to mark email as sent
+            await supabase
+              .from('registrations')
+              .update({ email_sent: true })
+              .eq('id', registrationId);
+          } else {
+            console.error('Failed to send registration email for new registration:', await emailResponse.text());
+          }
+        } catch (emailError) {
+          console.error('Error sending registration email for new registration:', emailError);
+        }
       } else {
         console.log('Registration insert succeeded but no data returned');
       }

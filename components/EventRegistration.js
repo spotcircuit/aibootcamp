@@ -105,6 +105,9 @@ export default function EventRegistration({ event, user }) {
       
       console.log('Registration created successfully:', registration);
       
+      // Email will be sent after successful payment via the Stripe webhook
+      console.log('Registration confirmation email will be sent after successful payment');
+      
       // Create Stripe checkout session
       console.log('Creating Stripe checkout session with data:', {
         eventId: event.id,
