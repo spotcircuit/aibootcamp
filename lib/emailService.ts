@@ -190,7 +190,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<EmailSen
         </div>
         
         <div class="footer">
-          <p>© 2025 AI Bootcamp. All rights reserved.</p>
+          <p> 2025 AI Bootcamp. All rights reserved.</p>
           <p>This is an automated message from a no-reply email address. Please do not reply to this email.</p>
         </div>
       </body>
@@ -202,35 +202,43 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<EmailSen
     
     // Send the email
     const info = await transporter.sendMail({
-      from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL || 'aibootcamp@lexduo.ai'}>`,
+      from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL}>`,
       to: data.email,
-      subject: 'Welcome to AI Bootcamp!',
-      html: html,
+      subject: `Welcome to AI Bootcamp, ${data.name}!`,
+      html,
     });
-    
+
     console.log(`Welcome email sent: ${info.messageId}`);
-    
-    // Store the welcome email information in a custom table for tracking
-    try {
-      await supabaseAdmin
-        .from('email_logs')
-        .insert({
-          email_type: 'welcome',
-          recipient_email: data.email,
-          recipient_name: data.name,
-          related_user_id: data.userId,
-          sent_at: new Date().toISOString(),
-          message_id: info.messageId
-        });
-    } catch (logError) {
-      console.error('Error logging welcome email:', logError);
-      // Continue even if logging fails
+
+    // Log and mark email sent
+    await supabaseAdmin
+      .from('email_logs')
+      .insert({
+        email_type: 'welcome',
+        recipient_email: data.email,
+        recipient_name: data.name,
+        related_user_id: data.userId,
+        sent_at: new Date().toISOString(),
+        message_id: info.messageId
+      });
+    await markRegistrationEmailSent(data.userId as string);
+
+    // Send admin notification for new user
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL}>`,
+        to: adminEmail,
+        subject: `New user registered: ${data.email}`,
+        text: `A new user has registered:\n\nName: ${data.name}\nEmail: ${data.email}\nUser ID: ${data.userId}`
+      });
     }
-    
-    console.log(`Welcome email sent successfully to ${data.email}`);
-    return { 
+
+    console.log(`Admin notified of new user registration at ${adminEmail}`);
+
+    return {
       success: true,
-      message: 'Welcome email sent successfully'
+      message: 'Welcome email sent successfully',
     };
   } catch (error) {
     console.error('Exception sending welcome email:', error);
@@ -409,7 +417,7 @@ export async function sendEventRegistrationEmail(
         </div>
         
         <div class="footer">
-          <p>© 2025 AI Bootcamp. All rights reserved.</p>
+          <p> 2025 AI Bootcamp. All rights reserved.</p>
           <p>This is an automated message from a no-reply email address. Please do not reply to this email.</p>
         </div>
       </body>
@@ -421,7 +429,7 @@ export async function sendEventRegistrationEmail(
     
     // Send the email
     const info = await transporter.sendMail({
-      from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL || 'aibootcamp@lexduo.ai'}>`,
+      from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL}>`,
       to: data.email,
       subject: `Registration Confirmed: ${data.eventTitle}`,
       html: html,
@@ -453,8 +461,19 @@ export async function sendEventRegistrationEmail(
       // Continue even if logging fails
     }
     
-    console.log(`Registration email sent successfully to ${data.email}`);
-    return { 
+    // Send admin notification for new registration
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL}>`,
+        to: adminEmail,
+        subject: `New class registration: ${data.email}`,
+        text: `A new class registration has occurred:\n\nName: ${data.name}\nEmail: ${data.email}\nEvent: ${data.eventTitle}\nRegistration ID: ${data.registrationId}`
+      });
+      console.log(`Admin notified of new registration at ${adminEmail}`);
+    }
+
+    return {
       success: true,
       message: 'Registration email sent successfully'
     };

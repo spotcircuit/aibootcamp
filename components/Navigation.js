@@ -75,6 +75,12 @@ export default function Navigation() {
             >
               About
             </Link>
+            <Link
+              href="/help"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Help
+            </Link>
             
             {user ? (
               // Logged in user menu
@@ -200,6 +206,16 @@ export default function Navigation() {
               } block px-3 py-2 rounded-md text-base font-medium`}
             >
               About
+            </Link>
+            <Link
+              href="/help"
+              className={`${
+                router.pathname === '/help'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              } block px-3 py-2 rounded-md text-base font-medium`}
+            >
+              Help
             </Link>
             
             {user ? (
