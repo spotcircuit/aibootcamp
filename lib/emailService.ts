@@ -71,8 +71,12 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<EmailSen
     // Log for debugging
     console.log(`Sending welcome email to ${data.email} (${data.name})`);
     
+    // Determine base URL based on environment
+    const appUrl = process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_PRODUCTION_URL || 'https://aibootcamp.lexduo.ai'
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
     // Create the email HTML content
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://aibootcamp.lexduo.ai';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -293,8 +297,12 @@ export async function sendEventRegistrationEmail(
       `;
     }
     
+    // Determine base URL based on environment
+    const appUrl = process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_PRODUCTION_URL || 'https://aibootcamp.lexduo.ai'
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
     // Create the email HTML content
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://aibootcamp.lexduo.ai';
     const html = `
       <!DOCTYPE html>
       <html>
