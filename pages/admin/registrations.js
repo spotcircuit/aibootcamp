@@ -6,6 +6,29 @@ function RegistrationsAdmin() {
   const [loading, setLoading] = useState(true);
   const [registrations, setRegistrations] = useState([]);
 
+  // Resend registration email handler
+  const handleResendRegistration = async (registration) => {
+    try {
+      const res = await fetch('/api/admin/resendRegistrationEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registrationId: registration.id,
+          eventId: registration.event?.id,
+          eventTitle: registration.event?.name,
+          eventDate: registration.event?.date,
+          name: registration.name,
+          email: registration.email,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to resend email');
+      alert('Registration email resent');
+    } catch (err) {
+      console.error(err);
+      alert('Error resending registration email');
+    }
+  };
+
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
@@ -43,6 +66,7 @@ function RegistrationsAdmin() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Phone</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Amount Paid</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
@@ -59,6 +83,14 @@ function RegistrationsAdmin() {
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{registration.phone || 'N/A'}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       ${registration.amount_paid?.toFixed(2) || '0.00'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-right">
+                      <button
+                        onClick={() => handleResendRegistration(registration)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Resend Email
+                      </button>
                     </td>
                   </tr>
                 ))}

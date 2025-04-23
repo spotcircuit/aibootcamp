@@ -248,6 +248,26 @@ function UsersAdmin() {
     }
   };
 
+  // Resend welcome email handler
+  const handleResendWelcome = async (user) => {
+    try {
+      const res = await fetch('/api/admin/resendWelcomeEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name: user.full_name,
+          email: user.email,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to resend welcome email');
+      alert('Welcome email resent');
+    } catch (err) {
+      console.error(err);
+      alert('Error resending welcome email');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -289,7 +309,7 @@ function UsersAdmin() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Admin</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created At</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Setup Link</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -329,12 +349,18 @@ function UsersAdmin() {
                         </button>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                       <button
                         onClick={() => openEditModal(user)}
                         className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => handleResendWelcome(user)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Resend Welcome
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
