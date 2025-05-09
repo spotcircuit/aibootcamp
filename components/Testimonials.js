@@ -86,7 +86,7 @@ export default function Testimonials() {
   }, [storageBaseUrl, testimonials]);
 
   return (
-    <section id="testimonials" className="py-20 bg-gradient-to-br from-gray-50 to-indigo-50 relative overflow-hidden">
+    <section id="testimonials" className="py-20 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-300 rounded-full opacity-10"></div>
@@ -96,27 +96,27 @@ export default function Testimonials() {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100">
-            <span className="text-sm font-medium text-indigo-800 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+            <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               Real Results
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
             Success <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Stories</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Don&apos;t just take our word for it. Here&apos;s what our graduates have to say about their experience.
           </p>
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
-            <div 
-              key={index} 
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group"
+            <div
+              key={index}
+              className="group rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-white dark:bg-gray-800"
             >
               <div className="relative">
                 {/* Gradient overlay at top of card */}
@@ -125,7 +125,7 @@ export default function Testimonials() {
                 <div className="p-6">
                   <div className="flex items-center mb-6">
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-600 p-0.5 flex-shrink-0 mr-4 shadow-md">
-                      <div className="rounded-full overflow-hidden w-full h-full bg-white">
+                      <div className="rounded-full overflow-hidden w-full h-full bg-white dark:bg-gray-700">
                         {testimonialImages[testimonial.name] ? (
                           <Image
                             src={testimonialImages[testimonial.name]}
@@ -144,16 +144,16 @@ export default function Testimonials() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-indigo-800 group-hover:text-indigo-600 transition-colors">{testimonial.name}</h3>
-                      <p className="text-sm text-gray-600">{testimonial.title}</p>
+                      <h3 className="font-bold text-lg text-indigo-800 dark:text-indigo-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{testimonial.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.title}</p>
                     </div>
                   </div>
                   
                   <div className="relative mb-6">
-                    <svg className="absolute top-0 left-0 w-10 h-10 text-indigo-100 transform -translate-x-4 -translate-y-4" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="absolute top-0 left-0 w-10 h-10 text-indigo-100 dark:text-indigo-900 transform -translate-x-4 -translate-y-4" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                     </svg>
-                    <p className="text-gray-700 leading-relaxed relative z-10">&quot;{testimonial.quote}&quot;</p>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed relative z-10">&quot;{testimonial.quote}&quot;</p>
                   </div>
                   
                   {testimonial.tags && (
@@ -161,7 +161,7 @@ export default function Testimonials() {
                       {testimonial.tags.map((tag, tagIndex) => (
                         <span 
                           key={tagIndex} 
-                          className="text-xs bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full hover:bg-indigo-200 transition-colors"
+                          className="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 px-3 py-1 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
                         >
                           {tag}
                         </span>

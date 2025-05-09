@@ -78,7 +78,7 @@ export default function Programs() {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900 relative overflow-hidden">
+    <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-500 text-gray-900 dark:text-white relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute top-1/4 -right-20 w-64 h-64 bg-gradient-to-br from-purple-400 to-indigo-300 rounded-full opacity-20 blur-3xl"></div>
@@ -87,20 +87,20 @@ export default function Programs() {
       
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
-          <div className="inline-block px-3 py-1 mb-6 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-            <span className="text-sm font-medium text-white flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+          <div className="inline-block px-3 py-1 mb-6 rounded-full bg-indigo-200 dark:bg-white/10 backdrop-blur-sm border border-indigo-300 dark:border-white/20">
+            <span className="text-sm font-medium text-indigo-800 dark:text-white flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600 dark:text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
               </svg>
               Our Training Programs
             </span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Specialized AI Training for <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300">Every Professional</span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
+            Specialized AI Training for <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-yellow-300 dark:to-pink-300">Every Professional</span>
           </h2>
           
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-blue-100 max-w-3xl mx-auto">
             From fundamentals to advanced applications, our focused 2-hour workshops deliver practical AI skills for today's competitive landscape.
           </p>
         </div>
@@ -110,23 +110,23 @@ export default function Programs() {
             <Link 
               href={program.link} 
               key={program.id}
-              className="program-card group"
+              className="program-card group bg-white dark:bg-transparent border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-6 hover:shadow-lg transition-all duration-300"
             >
               <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${program.color} flex items-center justify-center mb-6 text-white group-hover:scale-110 transition-transform duration-300`}>
                 {program.icon}
               </div>
               
-              <h3 className="program-card-title">{program.title}</h3>
-              <p className="program-card-description">{program.description}</p>
+              <h3 className="text-xl font-bold mb-3 text-indigo-800 dark:text-white">{program.title}</h3>
+              <p className="text-gray-600 dark:text-blue-200 mb-4">{program.description}</p>
               {program.features && (
                 <ul className="program-card-features">
                   {program.features.map((feature, index) => (
-                    <li key={index} className="text-sm text-blue-200">{feature}</li>
+                    <li key={index} className="text-sm text-gray-500 dark:text-blue-200">{feature}</li>
                   ))}
                 </ul>
               )}
               
-              <div className="flex items-center text-yellow-300 font-medium">
+              <div className="flex items-center text-indigo-600 dark:text-yellow-300 font-medium">
                 <span>Explore workshops</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -139,7 +139,7 @@ export default function Programs() {
         <div className="mt-16 text-center">
           <Link 
             href="/events" 
-            className="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-bold text-lg hover:bg-white/20 transition-all duration-200 inline-flex items-center"
+            className="px-8 py-4 rounded-xl bg-indigo-100 dark:bg-white/10 backdrop-blur-sm border border-indigo-300 dark:border-white/20 text-indigo-800 dark:text-white font-bold text-lg hover:bg-indigo-200 dark:hover:bg-white/20 transition-all duration-200 inline-flex items-center"
           >
             View All Workshops
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">

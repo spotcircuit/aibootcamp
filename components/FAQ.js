@@ -83,7 +83,7 @@ export default function FAQ() {
   };
 
   return (
-    <section id="faq" className="py-16 bg-white relative overflow-hidden">
+    <section className="py-20 bg-white dark:bg-gray-900" id="faq">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-5">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-300 rounded-full"></div>
@@ -93,18 +93,18 @@ export default function FAQ() {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100">
-            <span className="text-sm font-medium text-indigo-800 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+            <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
               </svg>
               Got Questions?
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
             Frequently <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Asked Questions</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Find answers to common questions about our AI bootcamps and workshops.
           </p>
         </div>
@@ -121,21 +121,21 @@ export default function FAQ() {
                 className={`flex items-center justify-between w-full p-5 transition-colors ${
                   activeIndex === index 
                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
-                    : 'bg-white hover:bg-indigo-50'
+                    : 'bg-white dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-gray-700'
                 }`}
                 onClick={() => toggleAccordion(index)}
                 aria-expanded={activeIndex === index}
               >
                 <div className="flex items-center">
-                  <div className={`flex-shrink-0 mr-4 ${activeIndex === index ? 'text-white' : 'text-indigo-600'}`}>
+                  <div className={`flex-shrink-0 mr-4 ${activeIndex === index ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`}>
                     {faq.icon}
                   </div>
-                  <span className={`text-lg font-bold ${activeIndex === index ? 'text-white' : 'text-gray-900'}`} itemProp="name">
+                  <span className={`text-lg font-bold ${activeIndex === index ? 'text-white' : 'text-gray-900 dark:text-white'}`} itemProp="name">
                     {faq.question}
                   </span>
                 </div>
                 <svg 
-                  className={`w-6 h-6 ${activeIndex === index ? 'text-white' : 'text-indigo-600'} transform transition-transform ${activeIndex === index ? 'rotate-180' : ''}`} 
+                  className={`w-6 h-6 ${activeIndex === index ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'} transform transition-transform ${activeIndex === index ? 'rotate-180' : ''}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -145,9 +145,9 @@ export default function FAQ() {
               </button>
               
               <div 
-                className={`transition-all duration-300 bg-white ${
+                className={`transition-all duration-300 ${
                   activeIndex === index 
-                    ? 'max-h-96 py-6 px-6 border-t-0 border-l-2 border-r-2 border-b-2 border-indigo-100 rounded-b-xl' 
+                    ? 'max-h-96 py-6 px-6 border-t-0 border-l-2 border-r-2 border-b-2 border-indigo-100 dark:border-indigo-900 rounded-b-xl bg-gray-50 dark:bg-gray-800' 
                     : 'max-h-0 overflow-hidden'
                 }`}
                 aria-hidden={activeIndex !== index}
@@ -155,7 +155,7 @@ export default function FAQ() {
                 itemProp="acceptedAnswer"
                 itemType="https://schema.org/Answer"
               >
-                <p className="text-gray-700 text-lg leading-relaxed" itemProp="text">{faq.answer}</p>
+                <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed" itemProp="text">{faq.answer}</p>
               </div>
             </div>
           ))}

@@ -15,13 +15,13 @@ export default function Home() {
         <meta name="description" content="Master practical AI skills through specialized 2-hour workshops designed for today's professionals. LexDuo Academy offers hands-on training across multiple AI disciplines." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-        <div className="bg-white/20 backdrop-blur-lg">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-900">
+        <div className="bg-white/20 dark:bg-gray-900/20 backdrop-blur-lg">
           <Navigation />
           
           <Hero />
           
-          <section className="py-20 bg-white relative overflow-hidden">
+          <section className="py-20 bg-white dark:bg-gray-800 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-5">
               <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-300 rounded-full"></div>
               <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full"></div>
@@ -39,17 +39,15 @@ export default function Home() {
                   </span>
                 </div>
                 
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
                   Join Our <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Next Sessions</span>
                 </h2>
                 
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                <p className="text-xl text-gray-700 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
                   Reserve your spot in our upcoming workshops and start your AI journey with hands-on training from industry experts.
                 </p>
               </div>
             </div>
-            
-            <EventCalendar />
             
             <div className="container mx-auto px-6 relative z-10 mt-12 text-center">
               <Link href="/events" legacyBehavior>
@@ -65,7 +63,7 @@ export default function Home() {
           
           <Programs />
           
-          <section className="py-20 bg-gradient-to-br from-indigo-900 to-purple-900 relative overflow-hidden">
+          <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
               <div className="absolute top-1/4 -right-20 w-64 h-64 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-20 blur-3xl"></div>
               <div className="absolute bottom-1/4 -left-20 w-64 h-64 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full opacity-20 blur-3xl"></div>
@@ -83,23 +81,23 @@ export default function Home() {
                   </span>
                 </div>
                 
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
                   Transforming Professionals with <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300">Practical AI Skills</span>
                 </h2>
                 
-                <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+                <p className="text-xl text-red-600 dark:text-red-400 max-w-3xl mx-auto font-semibold">
                   LexDuo Academy offers intensive, 2-hour live training sessions where you'll learn how to build and implement practical AI tools that can transform your professional workflow.
                 </p>
               </div>
               
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl shadow-lg">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Approach</h3>
-                    <p className="text-gray-600 mb-6">
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 p-8 rounded-2xl shadow-lg">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Our Approach</h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
                       Our workshops focus on practical applications rather than theoretical concepts, ensuring you walk away with skills you can implement immediately. Each session is designed to provide hands-on experience with cutting-edge AI tools and techniques.
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Whether you're in talent acquisition, marketing, operations, healthcare, creative fields, or any other profession, our specialized AI training will equip you with the tools and knowledge to stay ahead in the rapidly evolving AI landscape.
                     </p>
                   </div>
@@ -142,7 +140,7 @@ export default function Home() {
                   Your Learning <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300">Outcomes</span>
                 </h2>
                 
-                <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+                <p className="text-xl text-red-600 dark:text-red-400 max-w-3xl mx-auto font-semibold">
                   After completing our workshops, you'll walk away with these valuable skills and insights:
                 </p>
               </div>
@@ -221,43 +219,43 @@ export default function Home() {
           
           <Testimonials />
           
-          <footer className="bg-gradient-to-br from-gray-900 to-indigo-900 text-white py-12">
+          <footer className="bg-indigo-900 dark:bg-gray-900 text-white py-12">
             <div className="container mx-auto px-6">
-              <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="flex flex-col md:flex-row items-center gap-12">
                 <div className="mb-8 md:mb-0 text-center md:text-left">
                   <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300">LexDuo Academy</h3>
-                  <p className="text-blue-100 mt-1">Specialized AI Training for Professionals</p>
-                  <p className="text-blue-100 mt-2">Founded by Mike Wolford</p>
+                  <p className="text-blue-100 dark:text-blue-200 mt-1">Specialized AI Training for Professionals</p>
+                  <p className="text-blue-100 dark:text-blue-200 mt-2">Founded by Mike Wolford</p>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center md:text-left mb-8 md:mb-0">
                   <div>
-                    <h4 className="text-lg font-semibold text-white mb-4">Programs</h4>
+                    <h4 className="text-lg font-semibold text-white dark:text-gray-300 mb-4">Programs</h4>
                     <ul className="space-y-2">
-                      <li><a href="/events?category=fundamentals" className="text-blue-100 hover:text-yellow-300 transition-colors">AI Fundamentals</a></li>
-                      <li><a href="/events?category=business" className="text-blue-100 hover:text-yellow-300 transition-colors">AI for Business</a></li>
-                      <li><a href="/events?category=development" className="text-blue-100 hover:text-yellow-300 transition-colors">AI Development</a></li>
+                      <li><a href="/events?category=fundamentals" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">AI Fundamentals</a></li>
+                      <li><a href="/events?category=business" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">AI for Business</a></li>
+                      <li><a href="/events?category=development" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">AI Development</a></li>
                     </ul>
                   </div>
                   
                   <div>
-                    <h4 className="text-lg font-semibold text-white mb-4">Resources</h4>
+                    <h4 className="text-lg font-semibold text-white dark:text-gray-300 mb-4">Resources</h4>
                     <ul className="space-y-2">
-                      <li><a href="/faq" className="text-blue-100 hover:text-yellow-300 transition-colors">FAQ</a></li>
-                      <li><a href="/blog" className="text-blue-100 hover:text-yellow-300 transition-colors">Blog</a></li>
-                      <li><a href="/contact" className="text-blue-100 hover:text-yellow-300 transition-colors">Contact</a></li>
+                      <li><a href="#" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">Success Stories</a></li>
+                      <li><a href="#" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">Blog</a></li>
+                      <li><a href="#" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">Contact</a></li>
                     </ul>
                   </div>
                   
                   <div className="col-span-2 md:col-span-1">
-                    <h4 className="text-lg font-semibold text-white mb-4">Connect</h4>
+                    <h4 className="text-lg font-semibold text-white dark:text-gray-300 mb-4">Company</h4>
                     <div className="flex justify-center md:justify-start space-x-4">
-                      <a href="#" className="text-blue-100 hover:text-yellow-300 transition-colors">
+                      <a href="#" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">
                         <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
                         </svg>
                       </a>
-                      <a href="#" className="text-blue-100 hover:text-yellow-300 transition-colors">
+                      <a href="#" className="text-blue-100 dark:text-blue-200 hover:text-yellow-300 transition-colors">
                         <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                       </svg>
@@ -277,7 +275,7 @@ export default function Home() {
                 </div>
                 
                 <div className="text-center md:text-right">
-                  <p className="text-blue-100">&copy; {new Date().getFullYear()} LexDuo Academy. All rights reserved.</p>
+                  <p className="text-blue-100 dark:text-blue-200">&copy; {new Date().getFullYear()} LexDuo Academy. All rights reserved.</p>
                 </div>
               </div>
             </div>
