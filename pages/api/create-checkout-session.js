@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('Request body:', JSON.stringify(req.body));
-    const { eventId, registrationId, amount, email, userId } = req.body;
+    const { eventId, registrationId, amount, email, userId, eventName } = req.body;
 
     if (!eventId || !registrationId || !amount) {
       console.log('Missing required parameters:', { eventId, registrationId, amount });
@@ -39,6 +39,51 @@ export default async function handler(req, res) {
     
     console.log('Stripe secret key available:', !!process.env.STRIPE_SECRET_KEY);
     console.log('Stripe product ID:', process.env.STRIPE_PRODUCT_ID);
+    
+    // Get the event image from Supabase or use a default based on event name
+    const getEventImage = async (eventId, eventName) => {
+      const baseUrl = appUrl;
+      let imageName;
+      
+      try {
+        // Try to get the image_name from Supabase
+        const { data, error } = await supabase
+          .from('events')
+          .select('image_name')
+          .eq('id', eventId)
+          .single();
+        
+        if (error) throw error;
+        
+        // Use the image_name from the database if available
+        imageName = data.image_name;
+        
+        // If no image_name is set, generate one from the event name
+        if (!imageName && eventName) {
+          imageName = eventName
+            .replace(/[^a-zA-Z0-9 ]/g, '')
+            .replace(/\s+/g, '-')
+            .toLowerCase() + '.png';
+        }
+      } catch (error) {
+        console.error('Error fetching event image:', error);
+        // Fallback to a default image name based on event name
+        if (eventName) {
+          imageName = eventName
+            .replace(/[^a-zA-Z0-9 ]/g, '')
+            .replace(/\s+/g, '-')
+            .toLowerCase() + '.png';
+        } else {
+          imageName = 'default-event.png';
+        }
+      }
+      
+      // The image path will be in the public directory
+      return `${baseUrl}/${imageName}`;
+    };
+    
+    // Get the image URL for this event
+    const eventImageUrl = await getEventImage(eventId, eventName);
 
     // Create a Stripe checkout session
     console.log('Creating Stripe checkout session with params:', {
@@ -68,7 +113,13 @@ export default async function handler(req, res) {
         {
           price_data: {
             currency: 'usd',
-            product: process.env.STRIPE_PRODUCT_ID, // Use the product ID from environment variables
+            product_data: {
+              name: eventName || 'Event Registration',
+              description: `Registration for ${eventName || 'event'}`,
+              images: [
+                eventImageUrl // Dynamic image URL based on event ID
+              ],
+            },
             unit_amount: Math.round(amount * 100), // Stripe uses cents
           },
           quantity: 1,
@@ -78,6 +129,7 @@ export default async function handler(req, res) {
         registrationId,
         eventId,
         userId: userId || '', // Include userId in metadata
+        eventName: eventName || '',
       },
       customer_email: email,
       client_reference_id: registrationId,

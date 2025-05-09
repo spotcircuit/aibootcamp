@@ -23,6 +23,8 @@ interface EventRegistrationEmailData {
   registrationId: string;
   meetingLink?: string;
   meetingType?: string;
+  instructorName?: string;
+  customTime?: string;
 }
 
 // Initialize Supabase client with service role key for admin operations
@@ -519,5 +521,203 @@ export async function markRegistrationEmailSent(registrationId: string): Promise
   } catch (error) {
     console.error(`Exception marking registration ${registrationId} as email sent:`, error);
     return false;
+  }
+}
+
+/**
+ * Send a payment reminder email for a pending registration
+ * @param {EventRegistrationEmailData} data - Registration data for the email
+ * @returns {Promise<EmailSendResult>} Result of the email send operation
+ */
+export async function sendPaymentReminderEmail(
+  data: EventRegistrationEmailData
+): Promise<EmailSendResult> {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    
+    // Log for debugging
+    console.log(`Sending payment reminder email to ${data.email} for event: ${data.eventTitle}`);
+    
+    // Format the event date for display
+    const eventDate = new Date(data.eventDate);
+    const formattedDate = eventDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    const formattedTime = eventDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Determine base URL based on environment
+    const appUrl = process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_APP_URL || 'https://aibootcamp.vercel.app'
+      : 'http://localhost:3000';
+    
+    // Generate the payment URL
+    // This URL will redirect to the Stripe checkout page for this registration
+    const paymentUrl = `${appUrl}/payment/${data.registrationId}?eventId=${data.eventId}`;
+    
+    // Create the payment reminder email HTML content
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment Reminder: ${data.eventTitle}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #f0f4f8;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+          }
+          .content {
+            padding: 20px;
+            background-color: #ffffff;
+            border-left: 1px solid #e1e8ed;
+            border-right: 1px solid #e1e8ed;
+          }
+          .footer {
+            background-color: #f0f4f8;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #657786;
+            border-radius: 0 0 5px 5px;
+          }
+          .reminder-box {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          .event-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+          }
+          .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+          }
+          .button-container {
+            text-align: center;
+            margin: 25px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Payment Reminder</h2>
+          </div>
+          
+          <div class="content">
+            <p>Hello ${data.name},</p>
+            
+            <div class="reminder-box">
+              <p><strong>This is a friendly reminder that your registration for ${data.eventTitle} is still pending payment.</strong></p>
+              <p>To secure your spot, please complete your payment as soon as possible.</p>
+            </div>
+            
+            <div class="event-details">
+              <h3>Event Details</h3>
+              <p><strong>Event:</strong> ${data.eventTitle}</p>
+              <p><strong>Date:</strong> ${formattedDate}</p>
+              <p><strong>Time:</strong> ${data.customTime || formattedTime}</p>
+              <p><strong>Location:</strong> Virtual</p>
+              ${data.instructorName ? `<p><strong>Instructor:</strong> ${data.instructorName}</p>` : ''}
+            </div>
+            
+            <div class="button-container">
+              <a href="${paymentUrl}" class="button">Complete Your Payment</a>
+            </div>
+            
+            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="word-break: break-all;"><a href="${paymentUrl}">${paymentUrl}</a></p>
+            
+            <p>If you have any questions, please don't hesitate to contact us.</p>
+            
+            <p>Thank you,<br>AI Bootcamp Team</p>
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Create the transporter
+    const transporter = createTransporter();
+    
+    // Send the email
+    const info = await transporter.sendMail({
+      from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'} (No Reply)" <${process.env.SMTP_FROM_EMAIL}>`,
+      to: data.email,
+      subject: `Payment Reminder: ${data.eventTitle}`,
+      html: html,
+    });
+    
+    console.log(`Payment reminder email sent: ${info.messageId}`);
+    
+    // Store the email information in a custom table for tracking
+    try {
+      // Log the email in our database
+      await supabaseAdmin
+        .from('email_logs')
+        .insert({
+          email_type: 'payment_reminder',
+          recipient_email: data.email,
+          recipient_name: data.name,
+          related_event_id: data.eventId,
+          related_registration_id: data.registrationId,
+          event_title: data.eventTitle,
+          event_date: data.eventDate,
+          sent_at: new Date().toISOString(),
+          message_id: info.messageId
+        });
+    } catch (logError) {
+      // Just log the error but don't fail the overall operation
+      console.error('Error logging email send:', logError);
+    }
+    
+    return {
+      success: true,
+      message: 'Payment reminder email sent successfully'
+    };
+  } catch (error) {
+    console.error('Error sending payment reminder email:', error);
+    return {
+      success: false,
+      error: error as Error,
+      message: 'Failed to send payment reminder email'
+    };
   }
 }

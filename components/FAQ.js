@@ -83,31 +83,59 @@ export default function FAQ() {
   };
 
   return (
-    <section id="faq" className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+    <section id="faq" className="py-16 bg-white relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-5">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-300 rounded-full"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full"></div>
+        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:20px_20px]"></div>
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-12">
+          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100">
+            <span className="text-sm font-medium text-indigo-800 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+              Got Questions?
+            </span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+            Frequently <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Asked Questions</span>
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Find answers to common questions about our AI bootcamps and workshops.
+          </p>
+        </div>
         
         <div className="max-w-3xl mx-auto">
           {faqs.map((faq, index) => (
             <div 
               key={index}
-              className="mb-4 border border-gray-200 rounded-lg overflow-hidden"
+              className="mb-6 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
               itemScope
               itemType="https://schema.org/Question"
             >
               <button
-                className="flex items-center justify-between w-full p-5 bg-white hover:bg-gray-50 transition-colors"
+                className={`flex items-center justify-between w-full p-5 transition-colors ${
+                  activeIndex === index 
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+                    : 'bg-white hover:bg-indigo-50'
+                }`}
                 onClick={() => toggleAccordion(index)}
                 aria-expanded={activeIndex === index}
               >
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 mr-4">
+                  <div className={`flex-shrink-0 mr-4 ${activeIndex === index ? 'text-white' : 'text-indigo-600'}`}>
                     {faq.icon}
                   </div>
-                  <span className="text-lg font-medium text-gray-900" itemProp="name">{faq.question}</span>
+                  <span className={`text-lg font-bold ${activeIndex === index ? 'text-white' : 'text-gray-900'}`} itemProp="name">
+                    {faq.question}
+                  </span>
                 </div>
                 <svg 
-                  className={`w-6 h-6 text-gray-500 transform transition-transform ${activeIndex === index ? 'rotate-180' : ''}`} 
+                  className={`w-6 h-6 ${activeIndex === index ? 'text-white' : 'text-indigo-600'} transform transition-transform ${activeIndex === index ? 'rotate-180' : ''}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -117,16 +145,29 @@ export default function FAQ() {
               </button>
               
               <div 
-                className={`transition-all duration-300 ${activeIndex === index ? 'max-h-96 py-5 px-5' : 'max-h-0 overflow-hidden'}`}
+                className={`transition-all duration-300 bg-white ${
+                  activeIndex === index 
+                    ? 'max-h-96 py-6 px-6 border-t-0 border-l-2 border-r-2 border-b-2 border-indigo-100 rounded-b-xl' 
+                    : 'max-h-0 overflow-hidden'
+                }`}
                 aria-hidden={activeIndex !== index}
                 itemScope
                 itemProp="acceptedAnswer"
                 itemType="https://schema.org/Answer"
               >
-                <p className="text-gray-700" itemProp="text">{faq.answer}</p>
+                <p className="text-gray-700 text-lg leading-relaxed" itemProp="text">{faq.answer}</p>
               </div>
             </div>
           ))}
+        </div>
+        
+        <div className="mt-12 text-center">
+          <a 
+            href="#schedule"
+            className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          >
+            Register for a Workshop
+          </a>
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js'; // Keep for admin client if needed
+import fetch from 'node-fetch';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -155,7 +156,38 @@ export async function getServerSideProps(context) {
       };
     }
     
-    console.log(`Successfully updated registration ${existingReg.id} with payment details`);
+    console.log(`Successfully updated registration ${existingReg.id} with payment details`); 
+    
+    // Send confirmation email with meeting link after successful payment
+    try {
+      console.log('Sending confirmation email with meeting link...');
+      const emailResponse = await fetch(`${appUrl}/api/sendRegistrationEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}` // Use service role key for server-to-server request
+        },
+        body: JSON.stringify({
+          registrationId: existingReg.id,
+          eventId: existingReg.event_id,
+          eventTitle: eventDetails?.name || 'AI Bootcamp Event',
+          eventDate: eventDetails?.start_date || new Date().toISOString(),
+          name: existingReg.name,
+          email: existingReg.email
+        })
+      });
+      
+      const emailResult = await emailResponse.json();
+      console.log('Email sending result:', emailResult);
+      
+      if (!emailResult.success) {
+        console.error('Failed to send confirmation email:', emailResult.message);
+        errorMessage = 'Your registration is confirmed, but there was an issue sending the confirmation email.';
+      }
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+      errorMessage = 'Your registration is confirmed, but there was an issue sending the confirmation email.';
+    }
     
     // Get the updated registration
     const { data: updatedReg } = await supabaseAdmin
@@ -257,6 +289,32 @@ export default function SuccessPage({ success, error, event, registration, custo
                         <span className="font-medium">Status:</span> 
                         <span className="text-green-600 dark:text-green-400 ml-1">Confirmed</span>
                       </p>
+                      
+                      {/* Show meeting link if available */}
+                      {event?.meeting_link && (
+                        <div className="mt-4">
+                          <p className="text-gray-600 dark:text-gray-300 mb-2">
+                            <span className="font-medium">Meeting Link:</span>
+                          </p>
+                          <a 
+                            href={event.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            {event.meeting_type === 'zoom' ? 'Join Zoom Meeting' : 
+                             event.meeting_type === 'google_meet' ? 'Join Google Meet' : 
+                             event.meeting_type === 'teams' ? 'Join Microsoft Teams' : 'Join Meeting'}
+                          </a>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                            This link has also been sent to your email for future reference.
+                          </p>
+                        </div>
+                      )}
+                      
                     </div>
                   </div>
                 </div>

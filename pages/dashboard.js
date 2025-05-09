@@ -29,7 +29,9 @@ function Dashboard({ user }) {
               id,
               name,
               start_date,
-              location
+              location,
+              meeting_link,
+              meeting_type
             )
           `)
           .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`);
@@ -162,13 +164,57 @@ function Dashboard({ user }) {
                           </p>
                         </div>
                         
-                        {reg.events?.id && (
-                          <div className="mt-3">
+                        <div className="mt-3 flex flex-col space-y-2">
+                          {/* Add payment button for pending registrations */}
+                          {reg.payment_status !== 'paid' && (
+                            <a 
+                              href={`/payment/${reg.id}?eventId=${reg.event_id}`}
+                              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-fit"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                              </svg>
+                              Complete Payment
+                            </a>
+                          )}
+                          
+                          {reg.events?.id && (
                             <Link href={`/events/${reg.events.id}`} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                               View Event Details
                             </Link>
-                          </div>
-                        )}
+                          )}
+                          
+                          {/* Display meeting link only for paid registrations */}
+                          {reg.payment_status === 'paid' && reg.events?.meeting_link && (
+                            <div className="space-y-2">
+                              <a 
+                                href={reg.events.meeting_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                {reg.events.meeting_type === 'zoom' ? 'Join Zoom Meeting' : 
+                                 reg.events.meeting_type === 'google_meet' ? 'Join Google Meet' : 
+                                 reg.events.meeting_type === 'teams' ? 'Join Microsoft Teams' : 'Join Meeting'}
+                              </a>
+                              
+                              <div className="text-sm text-gray-600 dark:text-gray-400 break-all pl-2 border-l-2 border-green-200 dark:border-green-700">
+                                <span className="block font-medium mb-1">Meeting URL:</span>
+                                <a 
+                                  href={reg.events.meeting_link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                  {reg.events.meeting_link}
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

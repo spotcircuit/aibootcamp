@@ -19,8 +19,19 @@ export default async function handler(req, res) {
     case 'POST':
       try {
         // Explicitly extract expected fields
-        const { name, description, start_date, end_date, location, price, instructor_id } = req.body;
-        const eventData = { name, description, start_date, end_date, location, price, instructor_id: instructor_id || null }; // Ensure null if empty
+        const { name, description, start_date, end_date, location, price, instructor_id, meeting_link, meeting_type, image_name } = req.body;
+        const eventData = { 
+          name, 
+          description, 
+          start_date, 
+          end_date, 
+          location, 
+          price, 
+          instructor_id: instructor_id || null,
+          meeting_link: meeting_link || null,
+          meeting_type: meeting_type || null,
+          image_name: image_name || null
+        }; // Ensure null if empty
 
         const { data, error } = await supabaseAdmin
           .from('events')
@@ -37,11 +48,22 @@ export default async function handler(req, res) {
     case 'PUT':
       try {
         // Explicitly extract expected fields
-        const { id, name, description, start_date, end_date, location, price, instructor_id } = req.body;
+        const { id, name, description, start_date, end_date, location, price, instructor_id, meeting_link, meeting_type, image_name } = req.body;
         if (!id) {
           return res.status(400).json({ error: 'Event ID is required for update' });
         }
-        const eventData = { name, description, start_date, end_date, location, price, instructor_id: instructor_id || null }; // Ensure null if empty
+        const eventData = { 
+          name, 
+          description, 
+          start_date, 
+          end_date, 
+          location, 
+          price, 
+          instructor_id: instructor_id || null,
+          meeting_link: meeting_link || null,
+          meeting_type: meeting_type || null,
+          image_name: image_name || null
+        }; // Ensure null if empty
 
         const { data, error } = await supabaseAdmin
           .from('events')

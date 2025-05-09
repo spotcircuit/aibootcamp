@@ -86,61 +86,98 @@ export default function Testimonials() {
   }, [storageBaseUrl, testimonials]);
 
   return (
-    <section id="testimonials" className="py-16 bg-gray-100">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-3">Success Stories</h2>
-        <p className="text-gray-600 text-center mb-12 max-w-3xl mx-auto">
-          Don&apos;t just take our word for it. Here&apos;s what our graduates have to say about their experience.
-        </p>
+    <section id="testimonials" className="py-20 bg-gradient-to-br from-gray-50 to-indigo-50 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-300 rounded-full opacity-10"></div>
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full opacity-10"></div>
+        <div className="absolute inset-0 bg-grid-indigo/[0.03] bg-[length:20px_20px]"></div>
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-12">
+          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-indigo-100">
+            <span className="text-sm font-medium text-indigo-800 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Real Results
+            </span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+            Success <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Stories</span>
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Don&apos;t just take our word for it. Here&apos;s what our graduates have to say about their experience.
+          </p>
+        </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex-shrink-0 mr-4">
-                  {testimonialImages[testimonial.name] ? (
-                    <Image
-                      src={testimonialImages[testimonial.name]}
-                      alt={testimonial.name}
-                      width={48}
-                      height={48}
-                      className="object-cover"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <svg className="w-full h-full text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <div 
+              key={index} 
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group"
+            >
+              <div className="relative">
+                {/* Gradient overlay at top of card */}
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
+                
+                <div className="p-6">
+                  <div className="flex items-center mb-6">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-600 p-0.5 flex-shrink-0 mr-4 shadow-md">
+                      <div className="rounded-full overflow-hidden w-full h-full bg-white">
+                        {testimonialImages[testimonial.name] ? (
+                          <Image
+                            src={testimonialImages[testimonial.name]}
+                            alt={testimonial.name}
+                            width={64}
+                            height={64}
+                            className="object-cover w-full h-full"
+                            style={{ objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <svg className="w-full h-full text-indigo-500 p-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-indigo-800 group-hover:text-indigo-600 transition-colors">{testimonial.name}</h3>
+                      <p className="text-sm text-gray-600">{testimonial.title}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative mb-6">
+                    <svg className="absolute top-0 left-0 w-10 h-10 text-indigo-100 transform -translate-x-4 -translate-y-4" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                     </svg>
+                    <p className="text-gray-700 leading-relaxed relative z-10">&quot;{testimonial.quote}&quot;</p>
+                  </div>
+                  
+                  {testimonial.tags && (
+                    <div className="flex flex-wrap gap-2">
+                      {testimonial.tags.map((tag, tagIndex) => (
+                        <span 
+                          key={tagIndex} 
+                          className="text-xs bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full hover:bg-indigo-200 transition-colors"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-blue-800">{testimonial.name}</h3>
-                  <p className="text-sm text-gray-600">{testimonial.title}</p>
-                </div>
               </div>
-              
-              <div className="flex-grow">
-                <p className="text-gray-700 italic mb-4">&quot;{testimonial.quote}&quot;</p>
-              </div>
-              
-              {testimonial.tags && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {testimonial.tags.map((tag, tagIndex) => (
-                    <span key={tagIndex} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div>
         
-        <div className="mt-12 text-center">
+        <div className="mt-16 text-center">
           <a 
             href="#schedule"
-            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
             Join Our Next Session
           </a>
