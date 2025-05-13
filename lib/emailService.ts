@@ -554,8 +554,8 @@ export async function sendPaymentReminderEmail(
     
     // Determine base URL based on environment
     const appUrl = process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_APP_URL || 'https://aibootcamp.vercel.app'
-      : 'http://localhost:3000';
+      ? process.env.NEXT_PUBLIC_PRODUCTION_URL || 'https://aibootcamp.lexduo.ai'
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     // Generate the payment URL
     // This URL will redirect to the Stripe checkout page for this registration
