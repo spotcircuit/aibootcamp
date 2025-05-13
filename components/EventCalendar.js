@@ -46,11 +46,27 @@ export default function EventCalendar() {
 
   const formatTime = (timeString) => {
     if (!timeString) return '';
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm} EST`;
+    try {
+      // Extract just the time portion (HH:MM) from the ISO string
+      // Format: "2025-05-30T09:00:00+00:00"
+      if (timeString.includes('T')) {
+        const timePart = timeString.split('T')[1];
+        // Extract hours and minutes
+        const timeComponents = timePart.split(':');
+        const hours = parseInt(timeComponents[0], 10);
+        const minutes = timeComponents[1];
+        
+        // Convert to 12-hour format
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+        
+        return `${hours12}:${minutes} ${ampm} EST`;
+      }
+      return timeString;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString; // Return original if parsing fails
+    }
   };
 
   // Function to determine the gradient and decorative elements based on the event topic
