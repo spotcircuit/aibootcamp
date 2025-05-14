@@ -873,7 +873,7 @@ function AdminDashboard() {
         {/* Edit Event Modal */}
         {editingEvent && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold">
                   {editingEvent.id ? 'Edit Event' : 'Create New Event'}
@@ -912,85 +912,90 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Start Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={editingEvent.start_date}
-                    onChange={(e) => setEditingEvent({...editingEvent, start_date: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Start Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={editingEvent.start_date}
+                      onChange={(e) => setEditingEvent({...editingEvent, start_date: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">End Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={editingEvent.end_date}
+                      onChange={(e) => setEditingEvent({...editingEvent, end_date: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">End Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={editingEvent.end_date}
-                    onChange={(e) => setEditingEvent({...editingEvent, end_date: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Location</label>
+                    <input
+                      type="text"
+                      value={editingEvent.location}
+                      onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Location</label>
-                  <input
-                    type="text"
-                    value={editingEvent.location}
-                    onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-1">Price ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={editingEvent.price}
-                    onChange={(e) => setEditingEvent({...editingEvent, price: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingEvent.price}
+                      onChange={(e) => setEditingEvent({...editingEvent, price: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                  </div>
                 </div>
                 
                 {/* Meeting Type Dropdown (Optional) */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
-                    Meeting Type <span className="text-gray-500 font-normal">(optional)</span>
-                  </label>
-                  <select
-                    value={editingEvent.meeting_type || ''}
-                    onChange={(e) => setEditingEvent({...editingEvent, meeting_type: e.target.value})}
-                    className="w-full p-2 border rounded bg-white"
-                  >
-                    <option value="">-- Select Meeting Type --</option>
-                    <option value="zoom">Zoom</option>
-                    <option value="google_meet">Google Meet</option>
-                    <option value="teams">Microsoft Teams</option>
-                    <option value="other">Other</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Meeting Type <span className="text-gray-500 font-normal">(optional)</span>
+                    </label>
+                    <select
+                      value={editingEvent.meeting_type || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, meeting_type: e.target.value})}
+                      className="w-full p-2 border rounded bg-white"
+                    >
+                      <option value="">-- Select Meeting Type --</option>
+                      <option value="zoom">Zoom</option>
+                      <option value="google_meet">Google Meet</option>
+                      <option value="teams">Microsoft Teams</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Meeting Link <span className="text-gray-500 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://zoom.us/j/123456789 or similar"
+                      value={editingEvent.meeting_link || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, meeting_link: e.target.value})}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
                 </div>
-                
-                {/* Meeting Link (Optional) */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-1">
-                    Meeting Link <span className="text-gray-500 font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://zoom.us/j/123456789 or similar"
-                    value={editingEvent.meeting_link || ''}
-                    onChange={(e) => setEditingEvent({...editingEvent, meeting_link: e.target.value})}
-                    className="w-full p-2 border rounded"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    This link will be included in registration confirmation emails. You can add this later if not available now.
-                  </p>
-                </div>
+                <p className="text-xs text-gray-500 -mt-4 mb-6">
+                  This meeting link will be included in registration confirmation emails. You can add this later if not available now.
+                </p>
                 
                 {/* Image Name Field (Optional) */}
                 <div className="mb-6">
