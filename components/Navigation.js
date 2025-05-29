@@ -83,6 +83,13 @@ export default function Navigation() {
             </Link>
             
             <Link
+              href="/services"
+              className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-white px-3 py-2 rounded-md text-base font-bold transition-all duration-200"
+            >
+              AI Services
+            </Link>
+            
+            <Link
               href="/about"
               className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-white px-3 py-2 rounded-md text-base font-bold transition-all duration-200"
             >
@@ -213,6 +220,17 @@ export default function Navigation() {
               } block px-3 py-2 rounded-md text-base font-bold`}
             >
               Events
+            </Link>
+            
+            <Link
+              href="/services"
+              className={`${
+                router.pathname === '/services'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+              } block px-3 py-2 rounded-md text-base font-bold`}
+            >
+              AI Services
             </Link>
             
             <Link
