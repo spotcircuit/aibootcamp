@@ -26,6 +26,13 @@ export default function EventRegistration({ event, user }) {
       setIsSubmitting(true);
       setError(null);
       
+      // Check if event is archived
+      if (event.archived) {
+        setError('This event has been archived and is no longer available for registration.');
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Validate form
       if (!formData.name || !formData.email) {
         setError('Name and email are required');

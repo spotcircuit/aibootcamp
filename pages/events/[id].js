@@ -168,6 +168,56 @@ export default function EventDetail() {
       </div>
     );
   }
+  
+  // Check if event is archived and show appropriate message
+  if (event.archived) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navigation />
+        <div className="container mx-auto px-4 py-10">
+          <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <div className="mb-4 flex items-center">
+              <div className="bg-amber-100 dark:bg-amber-900 p-2 rounded-full mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Archived Event</h1>
+            </div>
+            
+            <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-4 mb-6">
+              <p className="text-amber-800 dark:text-amber-200">
+                This event ({event.name}) has been archived and is no longer available for registration. 
+                Please check our current events for similar offerings.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Event Details</h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-medium">Name:</span> {event.name}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-medium">Date:</span> {formatDate(event.start_date)}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-medium">Archived Date:</span> {event.archived_at ? formatDate(event.archived_at) : 'Unknown'}
+              </p>
+            </div>
+            
+            <div className="mt-8 space-x-4">
+              <Link href="/events" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Browse Current Events
+              </Link>
+              <Link href="/dashboard" className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                Go to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

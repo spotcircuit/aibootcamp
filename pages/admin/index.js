@@ -19,6 +19,11 @@ function AdminDashboard() {
     metadata: {}
   });
   
+  // Archive state
+  const [showArchivedEvents, setShowArchivedEvents] = useState(false);
+  const [selectedEvents, setSelectedEvents] = useState([]);
+  const [showBatchActions, setShowBatchActions] = useState(false);
+  
   const [isInstructorModalOpen, setIsInstructorModalOpen] = useState(false);
   const [currentInstructor, setCurrentInstructor] = useState(null);
   const [isEditingInstructor, setIsEditingInstructor] = useState(false);
@@ -85,7 +90,13 @@ function AdminDashboard() {
     const getEvents = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/admin/events');
+        
+        // Pass showArchived parameter to include archived events if needed
+        const url = showArchivedEvents 
+          ? '/api/admin/events?showArchived=true' 
+          : '/api/admin/events';
+          
+        const response = await fetch(url);
         if (!response.ok) {
           const error = await response.text();
           throw new Error(error);
@@ -101,7 +112,7 @@ function AdminDashboard() {
     };
 
     getEvents();
-  }, []);
+  }, [showArchivedEvents]); // Re-fetch when showArchivedEvents changes
 
   useEffect(() => {
     const getRegistrations = async () => {
@@ -178,10 +189,192 @@ function AdminDashboard() {
     }
   };
 
+  const handleArchiveEvent = async (eventId, isArchived) => {
+    if (!eventId) return;
+    
+    const action = isArchived ? 'unarchive' : 'archive';
+    const confirmMessage = isArchived 
+      ? 'Are you sure you want to unarchive this event? It will become visible to users again.'
+      : 'Are you sure you want to archive this event? It will no longer be visible to users but will remain in the system.';
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/admin/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: action
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      // Refresh events list
+      const updatedEventsResponse = await fetch(showArchivedEvents 
+        ? '/api/admin/events?showArchived=true' 
+        : '/api/admin/events');
+      
+      const updatedEvents = await updatedEventsResponse.json();
+      setEvents(updatedEvents || []);
+      
+    } catch (err) {
+      console.error(`Error ${action}ing event:`, err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleBatchArchive = async (isArchived = false) => {
+    if (selectedEvents.length === 0) {
+      setError('No events selected for batch operation');
+      return;
+    }
+    
+    const action = isArchived ? 'unarchive' : 'archive';
+    const confirmMessage = isArchived 
+      ? `Are you sure you want to unarchive ${selectedEvents.length} events? They will become visible to users again.`
+      : `Are you sure you want to archive ${selectedEvents.length} events? They will no longer be visible to users but will remain in the system.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Process each event in sequence
+      for (const eventId of selectedEvents) {
+        const response = await fetch(`/api/admin/events/${eventId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            operation: action
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error ${action}ing event ${eventId}:`, errorText);
+        }
+      }
+      
+      // Refresh events list
+      const updatedEventsResponse = await fetch(showArchivedEvents 
+        ? '/api/admin/events?showArchived=true' 
+        : '/api/admin/events');
+      
+      const updatedEvents = await updatedEventsResponse.json();
+      setEvents(updatedEvents || []);
+      
+      // Clear selections
+      setSelectedEvents([]);
+      setShowBatchActions(false);
+      
+    } catch (err) {
+      console.error(`Error during batch ${action}:`, err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleToggleEventSelection = (eventId) => {
+    setSelectedEvents(prev => {
+      if (prev.includes(eventId)) {
+        return prev.filter(id => id !== eventId);
+      } else {
+        return [...prev, eventId];
+      }
+    });
+  };
+  
+  const handleSelectAllEvents = () => {
+    if (selectedEvents.length === events.length) {
+      // If all are selected, deselect all
+      setSelectedEvents([]);
+    } else {
+      // Otherwise select all
+      setSelectedEvents(events.map(event => event.id));
+    }
+  };
+  
+  const handleDuplicateEvent = async (eventId) => {
+    if (!eventId) return;
+    
+    if (!confirm('Create a new copy of this event?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/admin/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: 'duplicate'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+      
+      const result = await response.json();
+      
+      // Add the new event to the list
+      setEvents(prev => {
+        const newEvents = [...prev, result.event];
+        return newEvents.sort((a, b) => 
+          new Date(a.start_date) - new Date(b.start_date)
+        );
+      });
+
+      // Optionally, you could set the new event for editing right away
+      setEditingEvent({
+        id: result.event.id,
+        name: result.event.name,
+        description: result.event.description,
+        start_date: new Date(result.event.start_date).toISOString().slice(0, 16),
+        end_date: new Date(result.event.end_date).toISOString().slice(0, 16),
+        location: result.event.location,
+        price: result.event.price,
+        instructor_id: result.event.instructor_id,
+        meeting_link: result.event.meeting_link || '',
+        meeting_type: result.event.meeting_type || '',
+        image_name: result.event.image_name || ''
+      });
+      
+    } catch (err) {
+      console.error('Error duplicating event:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteEvent = async (eventId) => {
     if (!eventId) return;
     
-    if (!confirm('Are you sure you want to delete this event? This will also delete all registrations for this event.')) {
+    if (!confirm('Are you sure you want to DELETE this event? This will permanently remove it and all associated registrations. Consider ARCHIVING instead.')) {
+      return;
+    }
+    
+    // Double-check for permanent deletion
+    if (!confirm('WARNING: This action cannot be undone! Press OK to permanently delete.')) {
       return;
     }
 
@@ -636,13 +829,72 @@ function AdminDashboard() {
                 <ChevronUpIcon className="h-6 w-6 text-gray-500 mr-2" />}
               <h2 className="text-2xl font-semibold">Events</h2>
             </div>
-            <button
-              onClick={() => setEditingEvent({})}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Add Event
-            </button>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowArchivedEvents(!showArchivedEvents)}
+                className={`px-4 py-2 rounded border ${
+                  showArchivedEvents 
+                  ? 'bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200' 
+                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                {showArchivedEvents ? 'Hide Archived' : 'Show Archived'}
+              </button>
+              <button
+                onClick={() => setShowBatchActions(!showBatchActions)}
+                className={`px-4 py-2 rounded border ${
+                  showBatchActions 
+                  ? 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' 
+                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                {showBatchActions ? 'Cancel Batch' : 'Batch Actions'}
+              </button>
+              <button
+                onClick={() => setEditingEvent({})}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Add Event
+              </button>
+            </div>
           </div>
+          
+          {/* Batch Actions Bar */}
+          {showBatchActions && !sectionsCollapsed.events && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
+              <div className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  id="select-all-events"
+                  checked={selectedEvents.length > 0 && selectedEvents.length === events.length}
+                  onChange={handleSelectAllEvents}
+                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="select-all-events" className="text-sm text-gray-700">
+                  {selectedEvents.length === 0 
+                    ? 'Select All' 
+                    : `Selected ${selectedEvents.length} of ${events.length}`}
+                </label>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleBatchArchive(false)}
+                  disabled={selectedEvents.length === 0}
+                  className="text-amber-600 hover:text-amber-900 disabled:text-gray-400 disabled:cursor-not-allowed bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded text-sm"
+                >
+                  Archive Selected
+                </button>
+                <button
+                  onClick={() => handleBatchArchive(true)}
+                  disabled={selectedEvents.length === 0}
+                  className="text-purple-600 hover:text-purple-900 disabled:text-gray-400 disabled:cursor-not-allowed bg-purple-50 hover:bg-purple-100 px-3 py-1 rounded text-sm"
+                >
+                  Unarchive Selected
+                </button>
+              </div>
+            </div>
+          )}
 
           {!sectionsCollapsed.events && (
             <div className="overflow-x-auto">
@@ -650,10 +902,14 @@ function AdminDashboard() {
                 <table className="min-w-full table-auto">
                   <thead className="sticky top-0 bg-white">
                     <tr className="bg-gray-100">
+                      {showBatchActions && (
+                        <th className="px-2 py-2 w-10 text-center">#</th>
+                      )}
                       <th className="px-4 py-2 text-left">Name</th>
                       <th className="px-4 py-2 text-left">Date</th>
                       <th className="px-4 py-2 text-left">Price</th>
                       <th className="px-4 py-2 text-left">Instructor</th>
+                      <th className="px-4 py-2 text-left">Status</th>
                       <th className="px-4 py-2 text-left">Actions</th>
                     </tr>
                   </thead>
@@ -662,24 +918,96 @@ function AdminDashboard() {
                       // Find instructor name
                       const instructor = instructors.find(inst => inst.instructor_id === event.instructor_id);
                       const instructorName = instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A';
+                      const isArchived = event.archived;
+                      
+                      // Check if event has previous version
+                      const hasPreviousVersion = event.previous_version_id !== null;
 
                       return (
                         <tr 
                           key={event.id}
-                          onClick={() => handleEventClick(event)}
-                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={(e) => {
+                            if (showBatchActions) {
+                              e.preventDefault();
+                              handleToggleEventSelection(event.id);
+                            } else {
+                              handleEventClick(event);
+                            }
+                          }}
+                          className={`cursor-pointer hover:bg-gray-50 ${isArchived ? 'bg-gray-50' : ''} ${selectedEvents.includes(event.id) ? 'bg-blue-50' : ''}`}
                         >
-                          <td className="px-4 py-2">{event.name}</td>
+                          {showBatchActions && (
+                            <td className="px-2 py-2 text-center">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedEvents.includes(event.id)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleEventSelection(event.id);
+                                }}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                            </td>
+                          )}
+                          <td className="px-4 py-2">
+                            {event.name}
+                            {hasPreviousVersion && (
+                              <span className="ml-2 text-xs text-blue-500 font-medium">
+                                (New version)
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-2">{new Date(event.start_date).toLocaleDateString()}</td>
                           <td className="px-4 py-2">${event.price}</td>
                           <td className="px-4 py-2">{instructorName}</td>
                           <td className="px-4 py-2">
+                            {isArchived ? (
+                              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                Archived
+                                {event.archived_at && (
+                                  <span className="ml-1 text-gray-500">
+                                    {new Date(event.archived_at).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                Active
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2 space-x-2">
                             <button
-                              onClick={(e) => handleEditClick(event, e)}
-                              className="text-blue-600 hover:text-blue-900 mr-4"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditClick(event, e);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 mr-2"
                             >
                               Edit
                             </button>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDuplicateEvent(event.id);
+                              }}
+                              className="text-green-600 hover:text-green-900 mr-2"
+                              title="Create a copy of this event"
+                            >
+                              Duplicate
+                            </button>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArchiveEvent(event.id, isArchived);
+                              }}
+                              className={`${isArchived ? 'text-purple-600 hover:text-purple-900' : 'text-amber-600 hover:text-amber-900'} mr-2`}
+                            >
+                              {isArchived ? 'Unarchive' : 'Archive'}
+                            </button>
+                            
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -693,6 +1021,16 @@ function AdminDashboard() {
                         </tr>
                       );
                     })}
+                    
+                    {events.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="px-4 py-4 text-center text-gray-500">
+                          {showArchivedEvents 
+                            ? 'No archived events found.' 
+                            : 'No active events found.'}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

@@ -11,12 +11,14 @@ export default function EventCalendar() {
   useEffect(() => {
     async function fetchEvents() {
       try {
+        // Only fetch non-archived events for public display
         const { data, error } = await supabase
           .from('events')
           .select(`
             *,
             instructor:instructors(*)
           `)
+          .eq('archived', false) // Only show non-archived events
           .order('start_date', { ascending: true })
           .limit(3); // Only show 3 upcoming events on the homepage
         

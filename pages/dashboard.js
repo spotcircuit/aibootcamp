@@ -31,7 +31,9 @@ function Dashboard({ user }) {
               start_date,
               location,
               meeting_link,
-              meeting_type
+              meeting_type,
+              archived,
+              archived_at
             )
           `)
           .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`);
@@ -141,10 +143,18 @@ function Dashboard({ user }) {
                 {registrations.length > 0 ? (
                   <div className="space-y-4">
                     {registrations.map((reg) => (
-                      <div key={reg.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
-                        <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-                          {reg.events?.name || 'Event'}
-                        </h3>
+                      <div key={reg.id} className={`border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0 ${reg.events?.archived ? 'bg-gray-50 dark:bg-gray-850 rounded-lg p-3' : ''}`}>
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+                            {reg.events?.name || 'Event'}
+                          </h3>
+                          {reg.events?.archived && (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-300">
+                              Archived
+                            </span>
+                          )}
+                        </div>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                           <p className="text-gray-600 dark:text-gray-300">
                             <span className="font-medium">Date:</span> {formatDate(reg.events?.start_date)}
@@ -162,6 +172,17 @@ function Dashboard({ user }) {
                           <p className="text-gray-600 dark:text-gray-300">
                             <span className="font-medium">Registration Date:</span> {formatDate(reg.created_at)}
                           </p>
+                          
+                          {reg.events?.archived && (
+                            <div className="md:col-span-2 mt-1">
+                              <div className="flex items-center text-amber-600 dark:text-amber-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.75.75 0 00.736-.686L10.95 4.237a.75.75 0 00-1.485.15L8.99 9H9z" clipRule="evenodd" />
+                                </svg>
+                                This event has been archived. Check for newer versions.
+                              </div>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="mt-3 flex flex-col space-y-2">
