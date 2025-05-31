@@ -41,6 +41,7 @@ FIX_*.md
 *_SETUP.md
 *_DEPLOYMENT.md
 REMOVE_*.md
+CLAUDE.md
 
 # scripts
 *.sh

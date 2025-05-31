@@ -14,29 +14,39 @@ export default function Services() {
     commission: 8000
   });
   
+  // Regular and discounted launch pricing
   const packages = {
     starter: {
       setupFee: 497,
       monthlyFee: 297,
+      discountedSetupFee: 248.50,
+      discountedMonthlyFee: 148.50,
       tools: 3,
       hoursSaved: 15,
       billableSavings: 3000
     },
     pro: {
-      setupFee: 797,
-      monthlyFee: 497,
+      setupFee: 997,
+      monthlyFee: 997,
+      discountedSetupFee: 498.50,
+      discountedMonthlyFee: 498.50,
       tools: 6,
       hoursSaved: 20,
       billableSavings: 4000
     },
     elite: {
-      setupFee: 1197,
-      monthlyFee: 997,
+      setupFee: 1997,
+      monthlyFee: 1997,
+      discountedSetupFee: 998.50,
+      discountedMonthlyFee: 998.50,
       tools: 10,
       hoursSaved: 25,
       billableSavings: 5000
     }
   };
+  
+  // Launch discount enabled
+  const [showLaunchDiscount, setShowLaunchDiscount] = useState(true);
   
   // Calculate ROI based on current input values
   const calculateROI = () => {
@@ -53,8 +63,21 @@ export default function Services() {
     const monthlyRevenue = additionalRevenue;
     const threeMonthROI = monthlyRevenue * 3;
     
-    // Calculate package cost (setup + 3 months of retainer)
-    const packageCost = packages[selectedPackage].setupFee + (packages[selectedPackage].monthlyFee * 3);
+    // Calculate package cost (setup + 3 months of retainer) with potential discount
+    let setupFee, monthlyFee;
+    
+    if (showLaunchDiscount) {
+      setupFee = packages[selectedPackage].discountedSetupFee;
+      monthlyFee = packages[selectedPackage].discountedMonthlyFee;
+    } else {
+      setupFee = packages[selectedPackage].setupFee;
+      monthlyFee = packages[selectedPackage].monthlyFee;
+    }
+    
+    const packageCost = setupFee + (monthlyFee * 3);
+    const regularPackageCost = packages[selectedPackage].setupFee + (packages[selectedPackage].monthlyFee * 3);
+    const discount = regularPackageCost - packageCost;
+    
     const netROI = threeMonthROI - packageCost;
     const roiPercentage = Math.round((netROI / packageCost) * 100);
     
@@ -70,6 +93,10 @@ export default function Services() {
       monthlyRevenue,
       threeMonthROI,
       packageCost,
+      regularPackageCost,
+      discount,
+      setupFee,
+      monthlyFee,
       netROI,
       roiPercentage
     };
@@ -251,20 +278,51 @@ export default function Services() {
                 {/* Pricing tiers */}
                 <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                   {/* Starter tier */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-300 hover:-translate-y-2">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-300 hover:-translate-y-2 relative">
+                    {showLaunchDiscount && (
+                      <div className="absolute -top-3 -right-10 bg-red-500 text-white text-xs font-bold px-12 py-1 rotate-45">
+                        50% OFF
+                      </div>
+                    )}
                     <div className="h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
                     <div className="p-6">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Starter Package</h3>
                       
+                      <div className="flex justify-center text-center mb-2">
+                        <div className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">
+                          Launch offer! First 10 clients only
+                        </div>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-2 mb-6">
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Setup Fee</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$497</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$497</span>
+                                $248.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $248.50</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$497</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">one-time</p>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Retainer</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$297</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$297</span>
+                                $148.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $148.50/mo</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$297</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">per month</p>
                         </div>
                       </div>
@@ -276,10 +334,10 @@ export default function Services() {
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-3">What's included:</h4>
                         <ul className="space-y-2">
-                          <BenefitItem text="3 custom AI tools for your workflow" />
-                          <BenefitItem text="1 kickoff training session" />
-                          <BenefitItem text="Monthly updates" />
-                          <BenefitItem text="Email support" />
+                          <BenefitItem text="Custom AI Screener for pre-screening resumes" />
+                          <BenefitItem text="Prompt-based Interviewer with automated scoring" />
+                          <BenefitItem text="LinkedIn AI Assistant for candidate sourcing" />
+                          <BenefitItem text="Weekly performance report dashboards" />
                           <BenefitItem text="Tools remain fully functional after support period" />
                         </ul>
                       </div>
@@ -288,13 +346,21 @@ export default function Services() {
                         <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 15+ hrs/week → $3,000+ in billable time</p>
                       </div>
                       
-                      <a 
-                        href="#calculator" 
-                        onClick={() => setSelectedPackage('starter')}
-                        className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                      >
-                        Calculate Your ROI
-                      </a>
+                      <div className="grid grid-cols-2 gap-3">
+                        <a 
+                          href="#calculator" 
+                          onClick={() => setSelectedPackage('starter')}
+                          className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Calculate ROI
+                        </a>
+                        <button 
+                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                          className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Lock In Rate
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
@@ -303,19 +369,50 @@ export default function Services() {
                     <div className="absolute top-0 right-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
                       MOST POPULAR
                     </div>
+                    {showLaunchDiscount && (
+                      <div className="absolute -top-3 -right-10 bg-red-500 text-white text-xs font-bold px-12 py-1 rotate-45">
+                        50% OFF
+                      </div>
+                    )}
                     <div className="h-2 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
                     <div className="p-6">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Pro Package</h3>
                       
+                      <div className="flex justify-center text-center mb-2">
+                        <div className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">
+                          Launch offer! First 10 clients only
+                        </div>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-2 mb-6">
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Setup Fee</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$797</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$997</span>
+                                $498.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $498.50</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$997</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">one-time</p>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Retainer</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$497</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$997</span>
+                                $498.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $498.50/mo</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$997</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">per month</p>
                         </div>
                       </div>
@@ -327,73 +424,123 @@ export default function Services() {
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-3">What's included:</h4>
                         <ul className="space-y-2">
-                          <BenefitItem text="6 tools + advanced sourcing suite" />
-                          <BenefitItem text="Deep-dive implementation" />
-                          <BenefitItem text="Monthly updates" />
-                          <BenefitItem text="Chat support" />
+                          <BenefitItem text="Multi-stage AI Assessment system" />
+                          <BenefitItem text="Custom Candidate Ranking algorithm" />
+                          <BenefitItem text="Advanced Sourcing (200+ candidates)" />
+                          <BenefitItem text="Competitor Intelligence tools" />
+                          <BenefitItem text="Integration with common ATSes" />
                           <BenefitItem text="Tools remain fully functional after support period" />
                         </ul>
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 20+ hrs/week → $4,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 30+ hrs/week → $6,000+ in billable time</p>
                       </div>
                       
-                      <a 
-                        href="#calculator" 
-                        onClick={() => setSelectedPackage('pro')}
-                        className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                      >
-                        Calculate Your ROI
-                      </a>
+                      <div className="grid grid-cols-2 gap-3">
+                        <a 
+                          href="#calculator" 
+                          onClick={() => setSelectedPackage('pro')}
+                          className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Calculate ROI
+                        </a>
+                        <button 
+                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                          className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Lock In Rate
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
                   {/* Elite tier */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-300 hover:-translate-y-2">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-300 hover:-translate-y-2 relative">
+                    {showLaunchDiscount && (
+                      <div className="absolute -top-3 -right-10 bg-red-500 text-white text-xs font-bold px-12 py-1 rotate-45">
+                        50% OFF
+                      </div>
+                    )}
                     <div className="h-2 bg-gradient-to-r from-blue-400 to-cyan-500"></div>
                     <div className="p-6">
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Elite Package</h3>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Enterprise Package</h3>
+                      
+                      <div className="flex justify-center text-center mb-2">
+                        <div className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">
+                          Launch offer! First 10 clients only
+                        </div>
+                      </div>
                       
                       <div className="grid grid-cols-2 gap-2 mb-6">
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Setup Fee</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$1,197</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$1,997</span>
+                                $998.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $998.50</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$1,997</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">one-time</p>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Retainer</p>
-                          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$997</p>
+                          {showLaunchDiscount ? (
+                            <>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                                <span className="line-through text-gray-400 text-lg mr-1">$1,997</span>
+                                $998.50
+                              </p>
+                              <p className="text-xs text-red-500 font-semibold">SAVE $998.50/mo</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">$1,997</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400">per month</p>
                         </div>
                       </div>
                       
                       <p className="text-gray-700 dark:text-gray-200 mb-6">
-                        Premium solution for recruiters who want the absolute best tools.
+                        Complete end-to-end solution with unlimited capabilities.
                       </p>
                       
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-3">What's included:</h4>
                         <ul className="space-y-2">
-                          <BenefitItem text="10 tools + full automation" />
-                          <BenefitItem text="3 1-on-1 sessions" />
-                          <BenefitItem text="Monthly updates for 6 months" />
-                          <BenefitItem text="SLA support & priority improvements" />
+                          <BenefitItem text="Complete AI Recruitment Workflow" />
+                          <BenefitItem text="Fine-tuned AI Models on your data" />
+                          <BenefitItem text="Unlimited AI sourcing capabilities" />
+                          <BenefitItem text="Market Analysis & Intelligence Reports" />
+                          <BenefitItem text="Bi-weekly strategy consultation calls" />
+                          <BenefitItem text="White-labeled Client Portal" />
                           <BenefitItem text="Tools remain fully functional after support period" />
                         </ul>
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 25+ hrs/week → $5,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 60+ hrs/week → $12,000+ in billable time</p>
                       </div>
                       
-                      <a 
-                        href="#calculator" 
-                        onClick={() => setSelectedPackage('elite')}
-                        className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-400 to-cyan-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                      >
-                        Calculate Your ROI
-                      </a>
+                      <div className="grid grid-cols-2 gap-3">
+                        <a 
+                          href="#calculator" 
+                          onClick={() => setSelectedPackage('elite')}
+                          className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-blue-400 to-cyan-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Calculate ROI
+                        </a>
+                        <button 
+                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                          className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
+                        >
+                          Lock In Rate
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1246,6 +1393,136 @@ export default function Services() {
             </div>
           </div>
         </section>
+        
+        {/* Modal for pricing form */}
+        <div id="contactFormModal" className="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative">
+            <button 
+              onClick={() => document.getElementById('contactFormModal').classList.add('hidden')}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+              Lock In Your Discounted Rate
+            </h3>
+            
+            <p className="text-gray-700 dark:text-gray-200 mb-6 text-center">
+              Fill out this form to secure your spot as one of the first 10 clients with our special launch pricing.
+            </p>
+            
+            <form 
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                
+                // Get form values
+                const name = document.getElementById('modal-name').value;
+                const email = document.getElementById('modal-email').value;
+                const phone = document.getElementById('modal-phone').value;
+                const packageType = document.getElementById('modal-package').value;
+                
+                // Call API endpoint to send email
+                fetch('/api/contact-form', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    name,
+                    email,
+                    phone,
+                    packageType,
+                    source: 'pricing-page'
+                  }),
+                })
+                .then(response => {
+                  document.getElementById('formSubmitSuccess').classList.remove('hidden');
+                  document.getElementById('contactFormContent').classList.add('hidden');
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                  alert('There was an error submitting your form. Please try again.');
+                });
+              }}
+            >
+              <div id="contactFormContent">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-name">Full Name</label>
+                  <input 
+                    type="text" 
+                    id="modal-name" 
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
+                    placeholder="Your name"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-email">Email Address</label>
+                  <input 
+                    type="email" 
+                    id="modal-email" 
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-phone">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    id="modal-phone" 
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
+                    placeholder="(123) 456-7890"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-package">Package</label>
+                  <select 
+                    id="modal-package" 
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    required
+                  >
+                    <option value="">Select a package</option>
+                    <option value="starter">Starter Package ($148.50/mo + $248.50 setup)</option>
+                    <option value="pro">Pro Package ($498.50/mo + $498.50 setup)</option>
+                    <option value="elite">Elite Package ($998.50/mo + $998.50 setup)</option>
+                  </select>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200"
+                >
+                  Secure My Spot
+                </button>
+              </div>
+              
+              <div id="formSubmitSuccess" className="hidden text-center p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Thank You!</h4>
+                <p className="text-gray-700 dark:text-gray-200 mb-6">
+                  Your information has been submitted successfully. Our team will contact you within 24 hours to complete your registration.
+                </p>
+                <button 
+                  onClick={() => document.getElementById('contactFormModal').classList.add('hidden')}
+                  className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </>
   );
