@@ -7,11 +7,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, email, phone, packageType, source } = req.body;
+    const { name, email, phone, interest, message, source } = req.body;
 
     // Validate required fields
-    if (!name || !email || !packageType) {
-      return res.status(400).json({ error: 'Name, email, and package are required' });
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
     }
 
     // Create email transporter
@@ -25,30 +25,15 @@ export default async function handler(req, res) {
       },
     });
 
-    // Determine package details
-    let packageDetails = "";
-    switch(packageType) {
-      case 'starter':
-        packageDetails = "Starter Package ($148.50/month, $248.50 setup)";
-        break;
-      case 'pro':
-        packageDetails = "Pro Package ($498.50/month, $498.50 setup)";
-        break;
-      case 'enterprise':
-        packageDetails = "Enterprise Package ($998.50/month, $998.50 setup)";
-        break;
-      default:
-        packageDetails = packageType;
-    }
-
     // Create email content for admin
     const adminEmailContent = `
-      <h2>New Pricing Request</h2>
+      <h2>New Contact Form Submission</h2>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
-      <p><strong>Package:</strong> ${packageDetails}</p>
-      <p><strong>Source:</strong> ${source || 'Website'}</p>
+      <p><strong>Interest:</strong> ${interest || 'Not specified'}</p>
+      <p><strong>Message:</strong> ${message || 'No message provided'}</p>
+      <p><strong>Source:</strong> ${source || 'Contact Page'}</p>
       <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
     `;
 
@@ -56,21 +41,15 @@ export default async function handler(req, res) {
     const userEmailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #4F46E5; padding: 20px; text-align: center; color: white;">
-          <h1 style="margin: 0;">Thank You for Your Interest!</h1>
+          <h1 style="margin: 0;">Thank You for Contacting Us!</h1>
         </div>
         
         <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
           <p>Hello ${name},</p>
           
-          <p>Thank you for your interest in our ${packageDetails}. We've received your information and a member of our team will be in touch within 24 hours to discuss next steps.</p>
+          <p>Thank you for reaching out to us. We've received your message and a member of our team will be in touch within 24 hours.</p>
           
-          <p>Here's a summary of what you can expect:</p>
-          
-          <ul>
-            <li>A call to understand your specific recruiting needs</li>
-            <li>A personalized demo of our AI tools</li>
-            <li>Custom implementation plan tailored to your workflow</li>
-          </ul>
+          ${interest ? `<p>We're excited to discuss your interest in our ${interest} offering and how we can help you achieve your goals.</p>` : ''}
           
           <p>If you have any immediate questions, please reply to this email or call us at (555) 123-4567.</p>
           
@@ -83,12 +62,12 @@ export default async function handler(req, res) {
       </div>
     `;
 
-    // Send email to admin
+    // Send email to admin and tech email
     await transporter.sendMail({
       from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'}" <${process.env.SMTP_FROM_EMAIL}>`,
       to: process.env.ADMIN_EMAIL,
       cc: process.env.TECH_EMAIL,
-      subject: `New Pricing Request: ${packageType} Package`,
+      subject: `New Contact Form Submission${interest ? ': ' + interest : ''}`,
       html: adminEmailContent,
     });
 
@@ -96,7 +75,7 @@ export default async function handler(req, res) {
     await transporter.sendMail({
       from: `"${process.env.SMTP_FROM_NAME || 'AI Bootcamp'}" <${process.env.SMTP_FROM_EMAIL}>`,
       to: email,
-      subject: 'Thank You for Your Interest in AI Bootcamp',
+      subject: 'Thank You for Contacting AI Bootcamp',
       html: userEmailContent,
     });
 

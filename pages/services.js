@@ -6,6 +6,9 @@ import Navigation from '../components/Navigation';
 export default function Services() {
   const [activeTab, setActiveTab] = useState('individual');
   const [selectedPackage, setSelectedPackage] = useState('starter');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState('');
   const [calculatorValues, setCalculatorValues] = useState({
     hoursSourcing: 20,
     hoursScreening: 15,
@@ -23,7 +26,8 @@ export default function Services() {
       discountedMonthlyFee: 148.50,
       tools: 3,
       hoursSaved: 15,
-      billableSavings: 3000
+      billableSavings: 3000,
+      displayName: 'Starter Package'
     },
     pro: {
       setupFee: 997,
@@ -32,16 +36,18 @@ export default function Services() {
       discountedMonthlyFee: 498.50,
       tools: 6,
       hoursSaved: 20,
-      billableSavings: 4000
+      billableSavings: 4000,
+      displayName: 'Pro Package'
     },
-    elite: {
+    enterprise: {
       setupFee: 1997,
       monthlyFee: 1997,
       discountedSetupFee: 998.50,
       discountedMonthlyFee: 998.50,
       tools: 10,
       hoursSaved: 25,
-      billableSavings: 5000
+      billableSavings: 5000,
+      displayName: 'Enterprise Package'
     }
   };
   
@@ -108,6 +114,31 @@ export default function Services() {
     setRoi(calculateROI());
   }, [calculatorValues, selectedPackage]);
   
+  const handleContactFormSubmit = async (e) => {
+    e.preventDefault();
+    setFormSubmitting(true);
+    setFormError('');
+    
+    try {
+      const formData = new FormData(e.target);
+      const formValues = Object.fromEntries(formData.entries());
+      
+      // Here you would typically send the form data to your API
+      // For now, we'll simulate a successful submission after a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('Form submitted with values:', formValues);
+      setFormSuccess(true);
+      // Reset form
+      e.target.reset();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setFormError('There was an error submitting your request. Please try again.');
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
   const handleRangeChange = (e) => {
     const { id, value } = e.target;
     const key = id.replace('avg-', '').replace('hours-', '');
@@ -176,7 +207,7 @@ export default function Services() {
             </h1>
             
             <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-3">
-              Custom AI solutions that transform your recruiting operations—setup fee plus monthly retainer includes ongoing maintenance, updates, and priority support.
+              Custom AI solutions that transform your recruiting operationsâ€”setup fee plus monthly retainer includes ongoing maintenance, updates, and priority support.
             </p>
             
             <p className="text-lg text-white max-w-2xl mx-auto mb-8">
@@ -188,7 +219,7 @@ export default function Services() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-white">50–70% Faster Time-to-Fill</span>
+                <span className="text-white">50â€“70% Faster Time-to-Fill</span>
               </div>
               
               <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-full px-5 py-2 border border-white/20">
@@ -214,12 +245,12 @@ export default function Services() {
                 </svg>
               </a>
               
-              <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-white text-base font-medium rounded-full shadow-sm text-white bg-transparent hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300">
+              <Link href="/contact?source=services" className="inline-flex items-center justify-center px-6 py-3 border border-white text-base font-medium rounded-full shadow-sm text-white bg-transparent hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300">
                 <span>Schedule a Consultation</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
         </section>
@@ -343,7 +374,7 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 15+ hrs/week → $3,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 15+ hrs/week â†’ $3,000+ in billable time</p>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3">
@@ -354,12 +385,12 @@ export default function Services() {
                         >
                           Calculate ROI
                         </a>
-                        <button 
-                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                        <Link 
+                          href="/contact?source=services&interest=Pro Package"
                           className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
                         >
                           Lock In Rate
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -434,7 +465,7 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 30+ hrs/week → $6,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 30+ hrs/week â†’ $6,000+ in billable time</p>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3">
@@ -445,12 +476,12 @@ export default function Services() {
                         >
                           Calculate ROI
                         </a>
-                        <button 
-                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                        <Link 
+                          href="/contact?source=services&interest=Pro Package"
                           className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
                         >
                           Lock In Rate
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -523,7 +554,7 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 60+ hrs/week → $12,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 60+ hrs/week â†’ $12,000+ in billable time</p>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3">
@@ -534,12 +565,12 @@ export default function Services() {
                         >
                           Calculate ROI
                         </a>
-                        <button 
-                          onClick={() => document.getElementById('contactFormModal').classList.remove('hidden')}
+                        <Link 
+                          href="/contact?source=services&interest=Pro Package"
                           className="block w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm"
                         >
                           Lock In Rate
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -580,7 +611,7 @@ export default function Services() {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      Elite Package
+                      Enterprise Package
                     </button>
                   </div>
                   
@@ -769,17 +800,17 @@ export default function Services() {
                     <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg mb-6">
                       <p className="font-medium text-gray-800 dark:text-white text-center mb-2">ROI Formula</p>
                       <p className="text-sm text-center text-gray-700 dark:text-gray-200">
-                        (New hires/mo – Old hires/mo) × Commission × 3 months – Package cost = Net ROI
+                        (New hires/mo â€“ Old hires/mo) Ã— Commission Ã— 3 months â€“ Package cost = Net ROI
                       </p>
                     </div>
                     
                     <div className="mt-6 flex justify-center">
-                      <a 
-                        href="#contact" 
+                      <Link 
+                        href={`/contact?source=services&interest=${packages[selectedPackage].displayName}`}
                         className="px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
                       >
-                        Get Started with {selectedPackage.charAt(0).toUpperCase() + selectedPackage.slice(1)} Package
-                      </a>
+                        Get Started with {packages[selectedPackage].displayName}
+                      </Link>
                     </div>
                     
                     <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-lg">
@@ -832,7 +863,7 @@ export default function Services() {
                       
                       <div className="flex justify-center mb-4">
                         <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold">
-                          <img src="/public/jessica-p.jpg" alt="Jessica P." className="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+                          <img src="/jessica-p.jpg" alt="Jessica P." className="h-full w-full object-cover" onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }} />
                           <span className="absolute">JP</span>
                         </div>
                       </div>
@@ -866,7 +897,7 @@ export default function Services() {
                       
                       <div className="flex justify-center mb-4">
                         <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold">
-                          <img src="/public/david-m.jpg" alt="David M." className="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+                          <img src="/david-m.jpg" alt="David M." className="h-full w-full object-cover" onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }} />
                           <span className="absolute">DM</span>
                         </div>
                       </div>
@@ -900,7 +931,7 @@ export default function Services() {
                       
                       <div className="flex justify-center mb-4">
                         <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 flex items-center justify-center text-white font-bold">
-                          <img src="/public/sarah-k.jpg" alt="Sarah K." className="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+                          <img src="/sarah-k.jpg" alt="Sarah K." className="h-full w-full object-cover" onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }} />
                           <span className="absolute">SK</span>
                         </div>
                       </div>
@@ -1058,7 +1089,7 @@ export default function Services() {
                       </div>
                       <div>
                         <h4 className="font-bold text-gray-900 dark:text-white">TechSource Recruiting</h4>
-                        <p className="text-gray-600 dark:text-gray-400">IT Staffing Company • 12 Recruiters</p>
+                        <p className="text-gray-600 dark:text-gray-400">IT Staffing Company â€¢ 12 Recruiters</p>
                       </div>
                     </div>
                     
@@ -1277,7 +1308,7 @@ export default function Services() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow border border-gray-200 dark:border-gray-700">
                   <h4 className="font-bold text-gray-900 dark:text-white mb-2">What is your 100% Satisfaction Guarantee?</h4>
                   <p className="text-gray-700 dark:text-gray-200">
-                    If you're not delighted after 60 days, we'll continue optimizing at no extra cost or refund your monthly retainer—your choice. We're committed to your success and stand behind our solutions.
+                    If you're not delighted after 60 days, we'll continue optimizing at no extra cost or refund your monthly retainerâ€”your choice. We're committed to your success and stand behind our solutions.
                   </p>
                 </div>
                 
@@ -1298,7 +1329,7 @@ export default function Services() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow border border-gray-200 dark:border-gray-700">
                   <h4 className="font-bold text-gray-900 dark:text-white mb-2">What happens after my retainer period ends?</h4>
                   <p className="text-gray-700 dark:text-gray-200">
-                    Your tools remain fully functional indefinitely—we don't disable or limit them when your support period ends. The monthly retainer simply covers ongoing updates, maintenance, and support. You can choose to renew or cancel at any time.
+                    Your tools remain fully functional indefinitelyâ€”we don't disable or limit them when your support period ends. The monthly retainer simply covers ongoing updates, maintenance, and support. You can choose to renew or cancel at any time.
                   </p>
                 </div>
                 
@@ -1317,13 +1348,13 @@ export default function Services() {
                 Ready to Transform Your Recruiting with AI?
               </h3>
               
-              <div className="flex flex-wrap gap-4 justify-center mb-8">
-                <a 
-                  href="#calculator" 
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link 
+                  href="/contact?source=services&interest=Pro Package" 
                   className="inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
                 >
                   Calculate Your ROI & Get Started
-                </a>
+                </Link>
                 
                 <Link 
                   href="/contact?source=services" 
@@ -1332,197 +1363,9 @@ export default function Services() {
                   Schedule a Consultation
                 </Link>
               </div>
-              
-              <div className="max-w-xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                <h4 className="font-bold text-gray-900 dark:text-white mb-4">Contact Us</h4>
-                
-                <form className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="name">Name</label>
-                      <input 
-                        type="text" 
-                        id="name" 
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                        placeholder="Your name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="email">Email</label>
-                      <input 
-                        type="email" 
-                        id="email" 
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                        placeholder="you@example.com"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="phone">Phone</label>
-                    <input 
-                      type="tel" 
-                      id="phone" 
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                      placeholder="(123) 456-7890"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="interest">I'm interested in:</label>
-                    <select 
-                      id="interest" 
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    >
-                      <option>Starter Package</option>
-                      <option>Pro Package</option>
-                      <option>Elite Package</option>
-                      <option>Team Solutions</option>
-                      <option>Custom Enterprise Solution</option>
-                    </select>
-                  </div>
-                  
-                  <button 
-                    type="submit" 
-                    className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200"
-                  >
-                    Submit
-                  </button>
-                </form>
-              </div>
             </div>
           </div>
         </section>
-        
-        {/* Modal for pricing form */}
-        <div id="contactFormModal" className="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative">
-            <button 
-              onClick={() => document.getElementById('contactFormModal').classList.add('hidden')}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-              Lock In Your Discounted Rate
-            </h3>
-            
-            <p className="text-gray-700 dark:text-gray-200 mb-6 text-center">
-              Fill out this form to secure your spot as one of the first 10 clients with our special launch pricing.
-            </p>
-            
-            <form 
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                
-                // Get form values
-                const name = document.getElementById('modal-name').value;
-                const email = document.getElementById('modal-email').value;
-                const phone = document.getElementById('modal-phone').value;
-                const packageType = document.getElementById('modal-package').value;
-                
-                // Call API endpoint to send email
-                fetch('/api/contact-form', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    name,
-                    email,
-                    phone,
-                    packageType,
-                    source: 'pricing-page'
-                  }),
-                })
-                .then(response => {
-                  document.getElementById('formSubmitSuccess').classList.remove('hidden');
-                  document.getElementById('contactFormContent').classList.add('hidden');
-                })
-                .catch(error => {
-                  console.error('Error:', error);
-                  alert('There was an error submitting your form. Please try again.');
-                });
-              }}
-            >
-              <div id="contactFormContent">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-name">Full Name</label>
-                  <input 
-                    type="text" 
-                    id="modal-name" 
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                    placeholder="Your name"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-email">Email Address</label>
-                  <input 
-                    type="email" 
-                    id="modal-email" 
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                    placeholder="you@example.com"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-phone">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    id="modal-phone" 
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
-                    placeholder="(123) 456-7890"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="modal-package">Package</label>
-                  <select 
-                    id="modal-package" 
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    required
-                  >
-                    <option value="">Select a package</option>
-                    <option value="starter">Starter Package ($148.50/mo + $248.50 setup)</option>
-                    <option value="pro">Pro Package ($498.50/mo + $498.50 setup)</option>
-                    <option value="elite">Elite Package ($998.50/mo + $998.50 setup)</option>
-                  </select>
-                </div>
-                
-                <button 
-                  type="submit" 
-                  className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200"
-                >
-                  Secure My Spot
-                </button>
-              </div>
-              
-              <div id="formSubmitSuccess" className="hidden text-center p-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Thank You!</h4>
-                <p className="text-gray-700 dark:text-gray-200 mb-6">
-                  Your information has been submitted successfully. Our team will contact you within 24 hours to complete your registration.
-                </p>
-                <button 
-                  onClick={() => document.getElementById('contactFormModal').classList.add('hidden')}
-                  className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       </div>
     </>
   );

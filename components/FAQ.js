@@ -163,7 +163,7 @@ export default function FAQ() {
         
         <div className="mt-12 text-center">
           <a 
-            href="#schedule"
+            href="/events"
             className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
             Register for a Workshop

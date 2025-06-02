@@ -92,7 +92,7 @@ export default function Tools() {
             of these powerful AI tools to solve real business problems.
           </p>
           <a 
-            href="#schedule"
+            href="/events"
             className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             See Available Sessions

@@ -21,7 +21,7 @@ export default function Navigation() {
     { name: "Home", href: "/", icon: <AcademicCapIcon className="w-5 h-5" /> },
     { name: "AI", href: "/what", icon: <Brain className="w-5 h-5" /> },
     { name: "Learn", href: "#curriculum", icon: <BookOpenIcon className="w-5 h-5" /> },
-    { name: "Schedule", href: "#schedule", icon: <CalendarIcon className="w-5 h-5" /> },
+    { name: "Schedule", href: "/events", icon: <CalendarIcon className="w-5 h-5" /> },
     { name: "Reviews", href: "#testimonials", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> },
   ];
 

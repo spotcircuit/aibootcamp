@@ -112,7 +112,7 @@ export default function Hero() {
                   
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold text-yellow-300">$199</div>
-                    <Link href="/events/1" className="px-4 py-2 rounded-lg bg-white text-indigo-600 font-bold hover:bg-blue-50 transition-colors">
+                    <Link href="/events" className="px-4 py-2 rounded-lg bg-white text-indigo-600 font-bold hover:bg-blue-50 transition-colors">
                       Learn More
                     </Link>
                   </div>

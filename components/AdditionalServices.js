@@ -41,13 +41,13 @@ export default function AdditionalServices() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/20 shadow-xl transform transition-all duration-300 hover:-translate-y-2">
             <div className="h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Individual Recruiters</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">Starter Package</h3>
               <p className="text-blue-100 mb-4">Become an AI-Powered Recruiting Machine</p>
               
               <div className="flex space-x-2 items-baseline mb-4">
-                <div className="text-lg font-bold text-yellow-300">Setup: $497</div>
+                <div className="text-lg font-bold text-yellow-300">Setup: $248.50</div>
                 <div className="text-base font-bold text-white">+</div>
-                <div className="text-lg font-bold text-yellow-300">$297/mo</div>
+                <div className="text-lg font-bold text-yellow-300">$148.50/mo</div>
               </div>
               
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6 border border-white/10">
@@ -69,10 +69,10 @@ export default function AdditionalServices() {
               </div>
               
               <Link 
-                href="/services#individual" 
+                href="/services?interest=Starter+Package" 
                 className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
               >
-                View Packages
+                Learn More
               </Link>
             </div>
           </div>
@@ -81,13 +81,13 @@ export default function AdditionalServices() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/20 shadow-xl transform transition-all duration-300 hover:-translate-y-2">
             <div className="h-2 bg-gradient-to-r from-blue-400 to-cyan-500"></div>
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Teams & Companies</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">Pro Package</h3>
               <p className="text-blue-100 mb-4">Transform Your Entire Recruiting Operation</p>
               
               <div className="flex space-x-2 items-baseline mb-4">
-                <div className="text-lg font-bold text-yellow-300">Setup: $2,997</div>
+                <div className="text-lg font-bold text-yellow-300">Setup: $498.50</div>
                 <div className="text-base font-bold text-white">+</div>
-                <div className="text-lg font-bold text-yellow-300">Custom Retainer</div>
+                <div className="text-lg font-bold text-yellow-300">$498.50/mo</div>
               </div>
               
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6 border border-white/10">
@@ -109,10 +109,10 @@ export default function AdditionalServices() {
               </div>
               
               <Link 
-                href="/services#teams" 
+                href="/services?interest=Pro+Package" 
                 className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-400 to-cyan-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
               >
-                View Solutions
+                Learn More
               </Link>
             </div>
           </div>
@@ -121,10 +121,14 @@ export default function AdditionalServices() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/20 shadow-xl transform transition-all duration-300 hover:-translate-y-2">
             <div className="h-2 bg-gradient-to-r from-indigo-400 to-violet-500"></div>
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Ongoing Support</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">Enterprise Package</h3>
               <p className="text-blue-100 mb-4">Stay Ahead of the AI Curve</p>
               
-              <div className="text-lg font-bold text-yellow-300 mb-4">$497/month</div>
+              <div className="flex space-x-2 items-baseline mb-4">
+                <div className="text-lg font-bold text-yellow-300">Setup: $998.50</div>
+                <div className="text-base font-bold text-white">+</div>
+                <div className="text-lg font-bold text-yellow-300">$998.50/mo</div>
+              </div>
               
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6 border border-white/10">
                 <h4 className="font-semibold text-white mb-3">Key Benefits:</h4>
@@ -145,7 +149,7 @@ export default function AdditionalServices() {
               </div>
               
               <Link 
-                href="/services#support" 
+                href="/services?interest=Enterprise+Package" 
                 className="block w-full mt-6 px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-400 to-violet-500 text-white font-bold text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
               >
                 Learn More
@@ -155,7 +159,7 @@ export default function AdditionalServices() {
         </div>
         
         {/* CTA */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-16 space-y-4 md:space-y-0 md:space-x-4">
           <Link 
             href="/services" 
             className="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-bold text-lg hover:bg-white/20 transition-all duration-200 inline-flex items-center"
@@ -163,6 +167,15 @@ export default function AdditionalServices() {
             Explore All Custom Solutions
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </Link>
+          <Link 
+            href="/contact?source=services" 
+            className="px-8 py-4 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-lg hover:bg-white/30 transition-all duration-200 inline-flex items-center"
+          >
+            Schedule a Consultation
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
             </svg>
           </Link>
         </div>

@@ -176,7 +176,7 @@ export default function Testimonials() {
         
         <div className="mt-16 text-center">
           <a 
-            href="#schedule"
+            href="/events"
             className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
             Join Our Next Session
