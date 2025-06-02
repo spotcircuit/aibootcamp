@@ -821,22 +821,7 @@ export default function Services() {
                   </div>
                 </div>
                 
-                {/* Trusted by section */}
-                <div className="mt-16">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-                    Trusted by <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Leading Recruiting Firms</span>
-                  </h3>
-                  
-                  <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 max-w-4xl mx-auto">
-                    {/* These would be actual logos in a real implementation */}
-                    <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 font-medium">Logo 1</div>
-                    <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 font-medium">Logo 2</div>
-                    <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 font-medium">Logo 3</div>
-                    <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 font-medium">Logo 4</div>
-                    <div className="h-12 w-32 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 font-medium">Logo 5</div>
-                  </div>
-                </div>
-                
+
                 {/* Testimonials for individual */}
                 <div className="mt-24">
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-12 text-center">
