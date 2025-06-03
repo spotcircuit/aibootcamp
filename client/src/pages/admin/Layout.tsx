@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-primary text-primary-foreground p-4">
+      <aside className="hidden md:flex md:flex-col md:w-64 bg-primary text-primary-foreground p-4">
         <div className="flex items-center gap-2 mb-8">
           <ChartBarIcon className="w-8 h-8" />
           <h1 className="text-xl font-bold">Admin Panel</h1>
@@ -51,6 +51,8 @@ export default function AdminLayout({ children }: PropsWithChildren) {
 
       {/* Main content */}
       <main className="flex-1 p-8 bg-background">
+        {/* Placeholder for mobile menu button */}
+        {/* <button className="md:hidden p-2 mb-4 bg-gray-200 rounded">Menu</button> */}
         {children}
       </main>
     </div>

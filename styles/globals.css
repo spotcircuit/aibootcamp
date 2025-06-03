@@ -113,7 +113,7 @@ a:hover {
   }
   
   .hero-subtitle {
-    @apply text-white text-2xl font-normal mt-1;
+    @apply text-white text-xl sm:text-2xl font-normal mt-1;
   }
   
   /* Grid pattern for backgrounds */

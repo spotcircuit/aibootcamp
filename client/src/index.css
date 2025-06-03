@@ -7,6 +7,10 @@
     @apply border-border;
   }
 
+  svg, svg * {
+    @apply border-none;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
