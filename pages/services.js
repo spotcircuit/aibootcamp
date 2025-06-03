@@ -374,10 +374,10 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 15+ hrs/week â†’ $3,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 15+ hrs/week &rarr; $3,000+ in billable time</p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-1 md:grid-cols-2">
                         <a 
                           href="#calculator" 
                           onClick={() => setSelectedPackage('starter')}
@@ -465,10 +465,10 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 30+ hrs/week â†’ $6,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 30+ hrs/week → $6,000+ in billable time</p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-1 md:grid-cols-2">
                         <a 
                           href="#calculator" 
                           onClick={() => setSelectedPackage('pro')}
@@ -554,10 +554,10 @@ export default function Services() {
                       </div>
                       
                       <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg mb-6">
-                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 60+ hrs/week â†’ $12,000+ in billable time</p>
+                        <p className="text-green-700 dark:text-green-400 font-semibold">Savings: 60+ hrs/week → $12,000+ in billable time</p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-1 md:grid-cols-2">
                         <a 
                           href="#calculator" 
                           onClick={() => setSelectedPackage('elite')}
