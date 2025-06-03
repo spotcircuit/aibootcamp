@@ -122,7 +122,7 @@ export default function Events() {
       {
         gradient: "bg-gradient-to-br from-indigo-600 via-purple-500 to-pink-500",
         decoration: (
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -bottom-6 -right-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M47.5,-57.2C59.9,-46.8,67.5,-30.9,71.5,-13.7C75.5,3.5,75.8,22,68.2,36.7C60.5,51.4,44.8,62.3,27.9,67.2C11,72.1,-7.2,71,-22.7,64.5C-38.2,58,-51,46.2,-60.9,31.1C-70.8,16,-77.8,-2.4,-74.3,-19.2C-70.8,-36,-56.8,-51.2,-41.3,-61.1C-25.8,-71,-12.9,-75.6,1.9,-77.9C16.7,-80.2,35.1,-67.5,47.5,-57.2Z" transform="translate(100 100)" />
             </svg>
@@ -132,7 +132,7 @@ export default function Events() {
       {
         gradient: "bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500",
         decoration: (
-          <div className="absolute -top-6 -left-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -top-6 -left-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M44.5,-52.1C59.1,-42.7,73.2,-29.6,77.8,-13.5C82.4,2.6,77.4,21.7,67.1,36.7C56.7,51.7,41,62.7,23.9,68.4C6.8,74.1,-11.6,74.5,-27.5,68.1C-43.4,61.7,-56.7,48.4,-65.4,32.2C-74.1,16,-78.1,-3.1,-73.3,-19.8C-68.5,-36.5,-54.9,-50.8,-39.8,-60C-24.7,-69.1,-8.1,-73.1,5.2,-79C18.5,-84.9,29.9,-61.5,44.5,-52.1Z" transform="translate(100 100)" />
             </svg>
@@ -142,7 +142,7 @@ export default function Events() {
       {
         gradient: "bg-gradient-to-br from-amber-500 via-orange-500 to-red-500",
         decoration: (
-          <div className="absolute -bottom-6 -left-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -bottom-6 -left-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M47.7,-51.2C61.3,-33.8,71.7,-16.9,71.4,-0.3C71.1,16.3,60.2,32.6,46.5,44.9C32.6,57.2,16.3,65.6,-2.2,67.8C-20.7,70,-41.4,66,-54.9,53.7C-68.4,41.4,-74.7,20.7,-73.4,1.3C-72.1,-18.1,-63.3,-36.2,-49.8,-53.6C-36.2,-71,-18.1,-87.8,-0.6,-87.2C16.9,-86.5,33.8,-68.6,47.7,-51.2Z" transform="translate(100 100)" />
             </svg>
@@ -160,7 +160,7 @@ export default function Events() {
       return {
         gradient: "bg-gradient-to-br from-indigo-600 via-purple-500 to-pink-500",
         decoration: (
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -bottom-6 -right-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M47.5,-57.2C59.9,-46.8,67.5,-30.9,71.5,-13.7C75.5,3.5,75.8,22,68.2,36.7C60.5,51.4,44.8,62.3,27.9,67.2C11,72.1,-7.2,71,-22.7,64.5C-38.2,58,-51,46.2,-60.9,31.1C-70.8,16,-77.8,-2.4,-74.3,-19.2C-70.8,-36,-56.8,-51.2,-41.3,-61.1C-25.8,-71,-12.9,-75.6,1.9,-77.9C16.7,-80.2,35.1,-67.5,47.5,-57.2Z" transform="translate(100 100)" />
             </svg>
@@ -179,7 +179,7 @@ export default function Events() {
       return {
         gradient: "bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-500",
         decoration: (
-          <div className="absolute -top-6 -left-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -top-6 -left-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M44.5,-52.1C59.1,-42.7,73.2,-29.6,77.8,-13.5C82.4,2.6,77.4,21.7,67.1,36.7C56.7,51.7,41,62.7,23.9,68.4C6.8,74.1,-11.6,74.5,-27.5,68.1C-43.4,61.7,-56.7,48.4,-65.4,32.2C-74.1,16,-78.1,-3.1,-73.3,-19.8C-68.5,-36.5,-54.9,-50.8,-39.8,-60C-24.7,-69.1,-8.1,-73.1,5.2,-79C18.5,-84.9,29.9,-61.5,44.5,-52.1Z" transform="translate(100 100)" />
             </svg>
@@ -197,7 +197,7 @@ export default function Events() {
       return {
         gradient: "bg-gradient-to-br from-amber-500 via-orange-500 to-red-500",
         decoration: (
-          <div className="absolute -bottom-6 -left-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -bottom-6 -left-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M47.7,-51.2C61.3,-33.8,71.7,-16.9,71.4,-0.3C71.1,16.3,60.2,32.6,46.5,44.9C32.6,57.2,16.3,65.6,-2.2,67.8C-20.7,70,-41.4,66,-54.9,53.7C-68.4,41.4,-74.7,20.7,-73.4,1.3C-72.1,-18.1,-63.3,-36.2,-49.8,-53.6C-36.2,-71,-18.1,-87.8,-0.6,-87.2C16.9,-86.5,33.8,-68.6,47.7,-51.2Z" transform="translate(100 100)" />
             </svg>
@@ -215,7 +215,7 @@ export default function Events() {
       return {
         gradient: "bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500",
         decoration: (
-          <div className="absolute -top-6 -right-6 w-32 h-32 opacity-20">
+          <div className="hidden sm:block absolute -top-6 -right-6 w-32 h-32 opacity-20">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFFFFF" d="M42.7,-62.2C56.8,-53.9,70.8,-43.2,77.2,-28.7C83.7,-14.2,82.5,4.1,76.4,19.9C70.2,35.7,59.1,48.9,45.1,57.9C31.1,66.9,14.1,71.6,-2.3,74.8C-18.8,78,-37.5,79.6,-51.9,71.5C-66.3,63.4,-76.3,45.6,-79.2,27.2C-82.2,8.8,-78,-10.2,-70.2,-26.1C-62.4,-42,-50.9,-54.8,-37.4,-63.2C-23.9,-71.6,-8.3,-75.7,4.2,-81.5C16.7,-87.3,28.6,-70.5,42.7,-62.2Z" transform="translate(100 100)" />
             </svg>
