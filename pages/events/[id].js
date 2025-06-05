@@ -77,8 +77,8 @@ export default function EventDetail() {
         setIsRegistered(true);
         setRegistrationId(registration.id);
         
-        // Check if registration is paid
-        setIsPaid(registration.payment_status === 'paid');
+        // Check if registration is paid or completed (for free events)
+        setIsPaid(registration.payment_status === 'paid' || registration.payment_status === 'completed');
         console.log(`Registration found. ID: ${registration.id}, Payment Status: ${registration.payment_status}`);
       } else {
         setIsRegistered(false);
@@ -241,7 +241,7 @@ export default function EventDetail() {
                   {formatTimeRange(event.start_date, event.end_date)}
                 </div>
                 <div className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm">
-                  ${event.price || 199}
+                  {event.price === 0 ? 'Free' : `$${event.price}`}
                 </div>
               </div>
               
@@ -286,7 +286,7 @@ export default function EventDetail() {
                   
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</h3>
-                    <p className="text-gray-900 dark:text-white">${event.price || 199}</p>
+                    <p className="text-gray-900 dark:text-white">{event.price === 0 ? 'Free' : `$${event.price}`}</p>
                   </div>
                 </div>
               </div>

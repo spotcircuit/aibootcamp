@@ -49,10 +49,16 @@ export async function getServerSideProps(context) {
     console.log('No active user session, will use URL parameters instead');
   }
 
-  const { session_id, registrationId } = context.query;
+  const { session_id, registrationId, free } = context.query;
   console.log('URL query parameters:', context.query);
   
-  if (!session_id) {
+  // Handle free events differently
+  if (free === 'true') {
+    console.log('Free event detected, bypassing session ID check');
+    if (!registrationId) {
+      return { props: { error: 'No registration ID provided for free event.' } };
+    }
+  } else if (!session_id) {
     return { props: { error: 'No session ID provided.' } };
   }
 
@@ -63,16 +69,25 @@ export async function getServerSideProps(context) {
   let customerEmail = null;
 
   try {
-    // 3. Retrieve the Stripe Session & Verify Payment (keep as is)
-    session = await stripe.checkout.sessions.retrieve(session_id);
+    let amountPaid = 0;
+    
+    // Handle free events differently than paid events
+    if (free === 'true') {
+      console.log('Processing free event registration');
+      // For free events, we don't have a Stripe session
+      customerEmail = null; // We'll get this from the registration
+    } else {
+      // 3. Retrieve the Stripe Session & Verify Payment (for paid events)
+      session = await stripe.checkout.sessions.retrieve(session_id);
 
-    if (session.payment_status !== 'paid') {
-      return { props: { error: 'Payment was not successful.' } };
+      if (session.payment_status !== 'paid') {
+        return { props: { error: 'Payment was not successful.' } };
+      }
+
+      // 4. Extract data from Stripe/URL
+      customerEmail = session.customer_details?.email;
+      amountPaid = session.amount_total;
     }
-
-    // 4. Extract data from Stripe/URL (keep as is)
-    customerEmail = session.customer_details?.email;
-    const amountPaid = session.amount_total;
     
     // Extract registrationId from URL
     const urlRegistrationId = registrationId;
@@ -131,15 +146,29 @@ export async function getServerSideProps(context) {
     console.log(`Found existing registration:`, existingReg);
     
     // Update the registration with payment details
-    const { error: updateError } = await supabaseAdmin
-      .from('registrations')
-      .update({ 
+    let updateData = {};
+    
+    if (free === 'true') {
+      // For free events
+      updateData = { 
+        paid_at: new Date().toISOString(), 
+        payment_status: 'completed',
+        amount_paid: 0
+      };
+    } else {
+      // For paid events
+      updateData = { 
         paid_at: new Date().toISOString(), 
         payment_status: 'paid',
         stripe_session_id: session_id,
         stripe_payment_id: session.payment_intent,
         amount_paid: amountPaid ? amountPaid / 100 : null
-      })
+      };
+    }
+    
+    const { error: updateError } = await supabaseAdmin
+      .from('registrations')
+      .update(updateData)
       .eq('id', existingReg.id);
       
     if (updateError) {
@@ -227,6 +256,7 @@ export async function getServerSideProps(context) {
 export default function SuccessPage({ success, error, event, registration, customerEmail, sessionId }) {
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
+  const { free } = router.query;
 
   useEffect(() => {
     if (success && !error) {
@@ -262,7 +292,7 @@ export default function SuccessPage({ success, error, event, registration, custo
               </div>
               
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-                Payment Successful!
+                {free === 'true' ? 'Registration Successful!' : 'Payment Successful!'}
               </h1>
               
               {registration ? (
@@ -283,7 +313,7 @@ export default function SuccessPage({ success, error, event, registration, custo
                         <span className="font-medium">Email:</span> {registration.email || customerEmail}
                       </p>
                       <p className="text-gray-600 dark:text-gray-300 mb-2">
-                        <span className="font-medium">Amount Paid:</span> ${registration.amount_paid}
+                        <span className="font-medium">Amount:</span> {registration.amount_paid === 0 ? 'Free' : `$${registration.amount_paid}`}
                       </p>
                       <p className="text-gray-600 dark:text-gray-300">
                         <span className="font-medium">Status:</span> 

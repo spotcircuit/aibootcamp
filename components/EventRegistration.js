@@ -112,16 +112,65 @@ export default function EventRegistration({ event, user }) {
       
       console.log('Registration created successfully:', registration);
       
-      // Email will be sent after successful payment via the Stripe webhook
-      console.log('Registration confirmation email will be sent after successful payment');
+      // Check if this is a free event (price is 0)
+      if (event.price === 0) {
+        console.log('Free event detected, bypassing Stripe checkout');
+        
+        // For free events, mark as paid immediately
+        const { error: updateError } = await supabase
+          .from('registrations')
+          .update({
+            payment_status: 'completed',
+            paid_at: new Date().toISOString(),
+            email_sent: true
+          })
+          .eq('id', registration.id);
+          
+        if (updateError) {
+          console.error('Error updating registration status for free event:', updateError);
+          setError('Failed to complete registration: ' + updateError.message);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Send confirmation email directly for free events
+        try {
+          const emailResponse = await fetch('/api/send-confirmation-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              registrationId: registration.id,
+              eventId: event.id,
+              email: formData.email,
+              name: formData.name
+            }),
+          });
+          
+          if (!emailResponse.ok) {
+            console.warn('Email sending failed but registration is complete');
+          } else {
+            console.log('Confirmation email sent for free event');
+          }
+        } catch (emailError) {
+          console.warn('Error sending confirmation email:', emailError);
+          // Continue even if email fails - registration is still valid
+        }
+        
+        // Redirect to success page directly
+        window.location.href = `/payment/success?eventId=${event.id}&userId=${user?.id || ''}&registrationId=${registration.id}&free=true`;
+        return;
+      }
       
-      // Create Stripe checkout session
-      console.log('Creating Stripe checkout session with data:', {
+      // For paid events, continue with Stripe checkout
+      console.log('Paid event, creating Stripe checkout session with data:', {
         eventId: event.id,
         registrationId: registration.id,
-        amount: event.price || 199,
+        amount: event.price,
         email: formData.email,
-        userId: user?.id || ''
+        userId: user?.id || '',
+        eventName: event.name
       });
       
       const response = await fetch('/api/create-checkout-session', {
@@ -132,9 +181,10 @@ export default function EventRegistration({ event, user }) {
         body: JSON.stringify({
           eventId: event.id,
           registrationId: registration.id,
-          amount: event.price || 199,
+          amount: event.price,
           email: formData.email,
-          userId: user?.id || ''
+          userId: user?.id || '',
+          eventName: event.name
         }),
       });
       
@@ -223,7 +273,7 @@ export default function EventRegistration({ event, user }) {
           <div className="flex justify-between w-full">
             <div className="text-sm">
               <p className="text-gray-600 dark:text-gray-400">
-                Price: ${event.price || 199}
+                Price: {event.price === 0 ? 'Free' : `$${event.price}`}
               </p>
             </div>
           </div>

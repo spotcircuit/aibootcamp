@@ -290,4 +290,43 @@ a:hover {
   .nav-item {
     @apply text-white/90 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap;
   }
+  
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .hero-title {
+      @apply text-4xl leading-tight;
+    }
+    
+    .hero-subtitle {
+      @apply text-xl leading-normal;
+    }
+    
+    .program-card {
+      @apply p-4;
+    }
+    
+    .program-card-title {
+      @apply text-xl;
+    }
+    
+    /* Fix pricing display on mobile */
+    .pricing-card {
+      @apply px-3 py-4;
+    }
+    
+    /* Improve form spacing on mobile */
+    .form-control, .form-select {
+      @apply py-3;
+    }
+    
+    /* Fix button spacing on mobile */
+    .btn {
+      @apply justify-center w-full mb-2;
+    }
+    
+    /* Improve readability of small text */
+    .text-xs {
+      @apply text-sm;
+    }
+  }
 }

@@ -160,14 +160,14 @@ function Dashboard({ user }) {
                             <span className="font-medium">Date:</span> {formatDate(reg.events?.start_date)}
                           </p>
                           <p className="text-gray-600 dark:text-gray-300">
-                            <span className="font-medium">Status:</span> {reg.payment_status === 'paid' ? (
+                            <span className="font-medium">Status:</span> {reg.payment_status === 'paid' || reg.payment_status === 'completed' ? (
                               <span className="text-green-600 dark:text-green-400">Confirmed</span>
                             ) : (
                               <span className="text-yellow-600 dark:text-yellow-400">Pending</span>
                             )}
                           </p>
                           <p className="text-gray-600 dark:text-gray-300">
-                            <span className="font-medium">Amount:</span> ${reg.amount_paid || 'N/A'}
+                            <span className="font-medium">Amount:</span> {reg.amount_paid === 0 ? 'Free' : `$${reg.amount_paid || 'N/A'}`}
                           </p>
                           <p className="text-gray-600 dark:text-gray-300">
                             <span className="font-medium">Registration Date:</span> {formatDate(reg.created_at)}
@@ -186,8 +186,8 @@ function Dashboard({ user }) {
                         </div>
                         
                         <div className="mt-3 flex flex-col space-y-2">
-                          {/* Add payment button for pending registrations */}
-                          {reg.payment_status !== 'paid' && (
+                          {/* Add payment button for pending registrations that aren't free events */}
+                          {reg.payment_status !== 'paid' && reg.payment_status !== 'completed' && reg.amount_paid !== 0 && (
                             <a 
                               href={`/payment/${reg.id}?eventId=${reg.event_id}`}
                               className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-fit"
